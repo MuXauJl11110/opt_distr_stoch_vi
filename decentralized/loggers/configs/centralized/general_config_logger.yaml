@@ -1,0 +1,46 @@
+available_tracks: !!set { argument, function, gradient }
+
+available_spaces: !!set { dual, primal }
+
+available_values: !!set { value }
+
+available_distances: !!set { distance_to_opt }
+
+distance_functions:
+  1-norm:
+    object: self.config_manager
+    name: norm
+    kwargs:
+      ord: 1
+  2-norm:
+    object: self.config_manager
+    name: norm
+    kwargs:
+      ord: 2
+  pairwise-2-norm:
+    object: self.config_manager
+    name: pairwise_norm
+    kwargs:
+      ord: 2
+  saddle-2-norm:
+    object: self.config_manager
+    name: saddle_norm2
+    kwargs: {}
+
+schema:
+  value:
+    source: str
+    step: "And(Use(int), lambda n: n > 0)"
+    verbose: bool
+
+  distance:
+    source: str
+    target: str
+    distance: "Or(*self.distance_functions.keys())"
+    step: "And(Use(int), lambda n: n > 0)"
+    verbose: bool
+
+  distance_function:
+    object: object
+    name: str
+    kwargs: dict

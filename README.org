@@ -1,0 +1,22 @@
+* About
+This is the supplementary code (in Python) for Decentralized Algorithm 1 from the paper
+[[https://arxiv.org/pdf/2202.02771.pdf]["Optimal Algorithms for Decentralized Stochastic Variational Inequalities"]]
+by Dmitry Kovalev, Aleksandr Beznosikov, Abdurakhmon Sadiev, Michael Persiianov, Peter Richtarik and Alexander Gasnikov.
+
+* Usage
+Just open =Synthetic= Jupyter notebook for synthetic data or =Real= for [[https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/][LIBSVM data]].
+
+* Acknowledgement
+I am deeply thankful to [[https://github.com/alexrogozin12][Alexander Rogozin]], whose [[https://github.com/alexrogozin12/data_sim_sp][code]]
+influenced decentralized part of this repo and [[https://github.com/ymalitsky][Yura Malitsky]] for [[https://github.com/ymalitsky/VR_for_VI][centralized part]].
+
+* Reference
+  If you find this code useful, please cite our paper:
+#+BEGIN_SRC
+@article{kovalev2022optimal,
+  title={Optimal Algorithms for Decentralized Stochastic Variational Inequalities},
+  author={Kovalev, Dmitry and Beznosikov, Aleksandr and Sadiev, Abdurakhmon and Persiianov, Michael and Richt{\'a}rik, Peter and Gasnikov, Alexander},
+  journal={arXiv preprint arXiv:2202.02771},
+  year={2022}
+}
+#+END_SRC
