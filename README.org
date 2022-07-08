@@ -4,7 +4,8 @@ This is the supplementary code (in Python) for Decentralized Algorithm 1 from th
 by Dmitry Kovalev, Aleksandr Beznosikov, Abdurakhmon Sadiev, Michael Persiianov, Peter Richtarik and Alexander Gasnikov.
 
 * Usage
-Just open =Synthetic= Jupyter notebook for synthetic data or =Real= for [[https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/][LIBSVM data]].
+Just open =Synthetic= Jupyter notebook for synthetic data or =Real= for [[https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/][LIBSVM data]]
+at decentralized setup or =Synthetic= at centralized.
 
 * Acknowledgement
 I am deeply thankful to [[https://github.com/alexrogozin12][Alexander Rogozin]], whose [[https://github.com/alexrogozin12/data_sim_sp][code]]
