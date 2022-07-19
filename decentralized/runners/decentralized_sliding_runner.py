@@ -1,10 +1,10 @@
 from typing import List
 
 import numpy as np
-from loggers import Logger
-from methods import DecentralizedSaddleSliding
-from oracles import ArrayPair, BaseSmoothSaddleOracle
-from utils import compute_lam_2
+from decentralized.loggers import Logger
+from decentralized.methods import DecentralizedSaddleSliding
+from decentralized.oracles import ArrayPair, BaseSmoothSaddleOracle
+from decentralized.utils import compute_lam_2
 
 
 class DecentralizedSaddleSlidingRunner(object):

@@ -6,7 +6,7 @@ import numpy as np
 import schema
 import yaml
 from numpy import linalg as LA
-from oracles.base import ArrayPair
+from decentralized.oracles.base import ArrayPair
 from prettytable import PrettyTable
 from schema import And, Or, Schema, Use
 

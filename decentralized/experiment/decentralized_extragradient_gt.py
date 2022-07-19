@@ -1,9 +1,11 @@
 from typing import List, Optional
 
 import numpy as np
-from loggers import LoggerDecentralized
-from oracles import ArrayPair
-from runners import DecentralizedExtragradientGTRunner
+from decentralized.loggers.logger import LoggerDecentralized
+from decentralized.oracles.base import ArrayPair
+from decentralized.runners.decentralized_extragradient_runner import (
+    DecentralizedExtragradientGTRunner,
+)
 
 
 def run_extragrad_gt(

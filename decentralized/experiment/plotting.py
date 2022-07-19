@@ -5,8 +5,8 @@ from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+from decentralized.oracles.base import ArrayPair
 from numpy import linalg as LA
-from oracles import ArrayPair
 
 
 def preplot_algorithms(

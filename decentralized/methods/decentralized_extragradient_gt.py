@@ -1,11 +1,14 @@
 from typing import List, Optional
 
 import numpy as np
-from loggers import Logger
-from oracles import ArrayPair, BaseSmoothSaddleOracle, LinearCombSaddleOracle
-
-from .base import BaseSaddleMethod
-from .constraints import ConstraintsL2
+from decentralized.loggers.logger import Logger
+from decentralized.methods.base import BaseSaddleMethod
+from decentralized.methods.constraints import ConstraintsL2
+from decentralized.oracles.base import (
+    ArrayPair,
+    BaseSmoothSaddleOracle,
+    LinearCombSaddleOracle,
+)
 
 
 class DecentralizedExtragradientGT(BaseSaddleMethod):

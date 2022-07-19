@@ -1,10 +1,10 @@
 from typing import List
 
 import numpy as np
-from loggers import Logger
-from methods import ConstraintsL2, DecentralizedExtragradientGT
-from oracles import BaseSmoothSaddleOracle
-from utils import compute_lam_2
+from decentralized.loggers import Logger
+from decentralized.methods import ConstraintsL2, DecentralizedExtragradientGT
+from decentralized.oracles import BaseSmoothSaddleOracle
+from decentralized.utils import compute_lam_2
 
 
 class DecentralizedExtragradientGTRunner(object):

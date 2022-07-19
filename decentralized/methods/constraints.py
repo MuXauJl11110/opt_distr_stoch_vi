@@ -1,6 +1,5 @@
 import numpy as np
-
-from .base import ArrayPair
+from decentralized.oracles.base import ArrayPair
 
 
 class ConstraintsL2(object):

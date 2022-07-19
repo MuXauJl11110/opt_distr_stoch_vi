@@ -1,10 +1,10 @@
 from typing import List
 
 import numpy as np
-from loggers import Logger
-from methods import ConstraintsL2, DecentralizedVIPAPC
-from oracles import ArrayPair, BaseSmoothSaddleOracle
-from utils import compute_lam
+from decentralized.loggers import LoggerDecentralized
+from decentralized.methods import ConstraintsL2, DecentralizedVIPAPC
+from decentralized.oracles import ArrayPair, BaseSmoothSaddleOracle
+from decentralized.utils import compute_lam
 
 
 class DecentralizedVIPAPCRunner(object):
@@ -16,7 +16,7 @@ class DecentralizedVIPAPCRunner(object):
         gos_mat: np.ndarray,
         r_x: float,
         r_y: float,
-        logger: Logger,
+        logger: LoggerDecentralized,
     ):
         self.oracles = oracles
         self.L = L
@@ -35,7 +35,7 @@ class DecentralizedVIPAPCRunner(object):
         self.alpha = 1 - min(1 / (1 + 3 * self.L * np.sqrt(self.chi) / self.mu), 1 / (2 * self.chi))
         self._params_computed = True
 
-    def create_method(self, z_0: ArrayPair, y_0: ArrayPair):
+    def create_method(self, z_0: List[ArrayPair], y_0: List[ArrayPair]):
         if self._params_computed == False:
             raise ValueError("Call compute_method_params first")
 

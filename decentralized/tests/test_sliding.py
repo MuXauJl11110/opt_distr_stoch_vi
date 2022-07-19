@@ -1,12 +1,13 @@
-import sys
-
-sys.path.append("../")
-
 import numpy as np
-from loggers import Logger
-from methods import DecentralizedSaddleSliding, SaddleSliding, extragradient_solver
-from oracles import ArrayPair, ScalarProdOracle, SquareDiffOracle
-from utils import compute_lam_2, ring_adj_mat
+from decentralized.loggers.logger import Logger
+from decentralized.methods import (
+    DecentralizedSaddleSliding,
+    SaddleSliding,
+    extragradient_solver,
+)
+from decentralized.oracles import ArrayPair, ScalarProdOracle, SquareDiffOracle
+from decentralized.tests.test_utils.utils import gen_mix_mat
+from decentralized.utils import compute_lam_2
 
 
 def test_sliding_simple():
@@ -21,7 +22,7 @@ def test_sliding_simple():
     eta_inner = 0.5 / (eta * L + 1)
     T_inner = int((1 + eta * L) * np.log10(1 / e))
 
-    logger = Logger()
+    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
     method = SaddleSliding(
         oracle_g=oracle_g,
         oracle_phi=oracle_phi,
@@ -42,7 +43,7 @@ def test_decentralized_sliding_simple():
     np.random.seed(0)
     d = 20
     num_nodes = 10
-    mix_mat = ring_adj_mat(num_nodes)
+    mix_mat = gen_mix_mat(num_nodes)
     z_0 = ArrayPair(np.random.rand(d), np.random.rand(d))
     oracles = [SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes) for m in range(1, num_nodes + 1)]
     L = 2.0
@@ -55,7 +56,7 @@ def test_decentralized_sliding_simple():
     lam = compute_lam_2(mix_mat)
     gossip_step = (1 - np.sqrt(1 - lam ** 2)) / (1 + np.sqrt(1 - lam ** 2))
 
-    logger = Logger()
+    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
     method = DecentralizedSaddleSliding(
         oracles=oracles,
         stepsize_outer=gamma,

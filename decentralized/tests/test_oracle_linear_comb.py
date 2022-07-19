@@ -1,10 +1,10 @@
-import sys
-
-sys.path.append("../")
-
 import numpy as np
-from oracles import ArrayPair, LinearCombSaddleOracle, create_robust_linear_oracle
-from utils import grad_finite_diff_saddle
+from decentralized.oracles import (
+    ArrayPair,
+    LinearCombSaddleOracle,
+    create_robust_linear_oracle,
+)
+from decentralized.utils import grad_finite_diff_saddle
 
 
 def test_oracle_linear_comb():

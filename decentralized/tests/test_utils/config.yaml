@@ -1,0 +1,6 @@
+argument:
+  primal:
+    value:
+      source: z
+      step: 1
+      verbose: False

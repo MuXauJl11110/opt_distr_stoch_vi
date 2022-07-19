@@ -2,8 +2,7 @@ from typing import Tuple
 
 import networkx as nx
 import numpy as np
-
-from .compute_params import compute_lam
+from decentralized.utils.compute_params import compute_lam
 
 
 def gen_matrices_decentralized(

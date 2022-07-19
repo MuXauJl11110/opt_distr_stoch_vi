@@ -4,17 +4,17 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+from decentralized.experiment.decentralized_extragradient_con import run_extragrad_con
+from decentralized.experiment.decentralized_extragradient_gt import run_extragrad_gt
+from decentralized.experiment.decentralized_vi_papc import run_vi_papc
+from decentralized.experiment.plotting import plot_algorithms, preplot_algorithms
+from decentralized.experiment.saddle_sliding import run_sliding
+from decentralized.experiment.saving import save_algorithms
+from decentralized.oracles.base import ArrayPair
+from decentralized.utils.generate_matrices import metropolis_weights
+from decentralized.utils.utils import get_oracles
 from IPython.display import clear_output
-from oracles import ArrayPair
 from tqdm import tqdm
-from utils import get_oracles, metropolis_weights
-
-from .decentralized_extragradient_con import run_extragrad_con
-from .decentralized_extragradient_gt import run_extragrad_gt
-from .decentralized_vi_papc import run_vi_papc
-from .plotting import plot_algorithms, preplot_algorithms
-from .saddle_sliding import run_sliding
-from .saving import save_algorithms
 
 
 def run_parameter_search(

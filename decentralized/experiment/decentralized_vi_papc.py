@@ -2,9 +2,9 @@ import random
 from typing import List, Optional
 
 import numpy as np
-from loggers import LoggerDecentralized
-from oracles import ArrayPair
-from runners import DecentralizedVIPAPCRunner
+from decentralized.loggers.logger import LoggerDecentralized
+from decentralized.oracles.base import ArrayPair
+from decentralized.runners.decentralized_vi_papc_runner import DecentralizedVIPAPCRunner
 
 
 def generate_y_list(num_nodes: int, z_0: ArrayPair):

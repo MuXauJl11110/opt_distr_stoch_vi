@@ -1,1 +1,1 @@
-from .logger import Logger, LoggerDecentralized
+from decentralized.loggers.logger import Logger, LoggerDecentralized

@@ -177,14 +177,14 @@ function stochExtraGradLooped_update(A, proj, x, y, x_avg, y_avg, wx, wy, α, τ
 end
 
 
-######################### Algorithm 2 ####################################################
+######################### Algorithm 1 ####################################################
 """
-    stochastic Algorithm 2 with variance reduction, loopless variant.
+    stochastic Algorithm 1 with variance reduction, loopless variant.
 
 distr = true: uses weighted sampling. It uses a sampling |A[i,:]|^2/|A|_F and similarly for columns.
 """
 
-function stochAlgorithm2(A::Array{Float64,2}, proj::Function,
+function stochAlgorithm1(A::Array{Float64,2}, proj::Function,
     z0::Array{Float64,1}, w0::Array{Float64,1}, α::Float64, γ::Float64, η::Float64, p::Float64, b::Int64,
     max_epoch::Int64; distr=false, tol=1e-6)
 
@@ -211,12 +211,12 @@ function stochAlgorithm2(A::Array{Float64,2}, proj::Function,
         update_w = update_wArray[k]
         i, j = arrayI[:, k], arrayJ[:, k]
         x, y, x_old, y_old, wx, wy, wx_old, wy_old, energy, epoch, epoch_count =
-        stochAlgorithm2Batch_update(A, proj, x, y, x_old, y_old, wx, wy, wx_old, wy_old,
+        stochAlgorithm1Batch_update(A, proj, x, y, x_old, y_old, wx, wy, wx_old, wy_old,
                                         energy, epoch, epoch_count, α, γ, η, b, i, j, cheap_update,
                                         update_w, rows_weights, columns_weights)
         if energy[end] < tol
             total_epoch = ceil(sum(epoch))
-            println("StochAlgorithm2 achieves $tol accuracy in $(total_epoch) epochs")
+            println("stochAlgorithm1 achieves $tol accuracy in $(total_epoch) epochs")
             break
         end
     end
@@ -227,7 +227,7 @@ function stochAlgorithm2(A::Array{Float64,2}, proj::Function,
 end
 
 
-function stochAlgorithm2Batch_update(A, proj, x, y, x_old, y_old, wx, wy, wx_old, wy_old, energy, epoch,
+function stochAlgorithm1Batch_update(A, proj, x, y, x_old, y_old, wx, wy, wx_old, wy_old, energy, epoch,
         epoch_count, α, γ, η, b, i, j, cheap_update, update_w, rows_weights, columns_weights)
     
     x_, y_ = zeros(n), zeros(m)

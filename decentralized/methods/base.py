@@ -2,8 +2,9 @@ from datetime import datetime
 from typing import Optional
 
 import numpy as np
-from loggers import Logger
-from oracles import ArrayPair, BaseSmoothSaddleOracle
+from decentralized.loggers.logger import Logger
+from decentralized.oracles.base import ArrayPair
+from decentralized.oracles.saddle_simple import BaseSmoothSaddleOracle
 
 
 class BaseSaddleMethod(object):

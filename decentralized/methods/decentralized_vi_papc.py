@@ -1,11 +1,14 @@
 from typing import List, Optional
 
 import numpy as np
-from loggers import Logger
-from oracles import ArrayPair, BaseSmoothSaddleOracle, LinearCombSaddleOracle
-
-from .base import BaseSaddleMethod
-from .constraints import ConstraintsL2
+from decentralized.loggers.logger import Logger
+from decentralized.methods.base import BaseSaddleMethod
+from decentralized.methods.constraints import ConstraintsL2
+from decentralized.oracles.base import (
+    ArrayPair,
+    BaseSmoothSaddleOracle,
+    LinearCombSaddleOracle,
+)
 
 
 class DecentralizedVIPAPC(BaseSaddleMethod):
@@ -66,7 +69,7 @@ class DecentralizedVIPAPC(BaseSaddleMethod):
         if constraints is not None:
             self.constraints = constraints
         else:
-            self.constraints = ConstraintsL2(+np.inf, 0.0)
+            self.constraints = ConstraintsL2(+np.inf, +np.inf)
 
         self.z_list = ArrayPair(
             np.array([z.x.copy() for z in z_0]),

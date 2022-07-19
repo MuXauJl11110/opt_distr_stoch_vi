@@ -1,9 +1,12 @@
 from typing import List, Optional
 
 import numpy as np
-from loggers import LoggerDecentralized
-from oracles import ArrayPair
-from runners import DecentralizedSaddleSlidingRunner, sliding_comm_per_iter
+from decentralized.loggers.logger import LoggerDecentralized
+from decentralized.oracles.base import ArrayPair
+from decentralized.runners.decentralized_sliding_runner import (
+    DecentralizedSaddleSlidingRunner,
+    sliding_comm_per_iter,
+)
 
 
 def run_sliding(

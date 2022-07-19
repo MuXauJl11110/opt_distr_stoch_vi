@@ -1,19 +1,16 @@
-import sys
-
-sys.path.append("../")
-
 import numpy as np
-from loggers import Logger
-from methods import DecentralizedVIPAPC
-from oracles import ArrayPair, SquareDiffOracle
-from utils import compute_lam, ring_lap_mat
+from decentralized.loggers.logger import Logger
+from decentralized.methods import DecentralizedVIPAPC
+from decentralized.oracles.base import ArrayPair
+from decentralized.oracles.saddle_simple import SquareDiffOracle
+from decentralized.utils import compute_lam, ring_gos_mat
 
 
 def test_decentralized_vi_papc():
     np.random.seed(0)
     d = 20
     num_nodes = 10
-    W = ring_lap_mat(num_nodes)
+    W = ring_gos_mat(num_nodes)
     lam = compute_lam(W)[0]
 
     oracles = [SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes) for m in range(1, num_nodes + 1)]
@@ -25,7 +22,7 @@ def test_decentralized_vi_papc():
     theta = min(1 / (2 * beta), L * np.sqrt(chi) / 3)
     eta = 1 / (3 * L * np.sqrt(chi))
     alpha = 1 - min(1 / (1 + 3 * L * np.sqrt(chi) / mu), 1 / (2 * chi))
-    logger = Logger()
+    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
 
     print(f"Chi:{chi}")
     print(f"Beta:{beta}")
@@ -45,7 +42,7 @@ def test_decentralized_vi_papc():
         theta=theta,
         alpha=alpha,
         beta=beta,
-        W=W,
+        gos_mat=W,
         logger=logger,
     )
 

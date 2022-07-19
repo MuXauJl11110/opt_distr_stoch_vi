@@ -1,19 +1,17 @@
-import sys
-
-sys.path.append("../")
-
 import numpy as np
-from loggers import Logger
-from methods import DecentralizedExtragradientGT
-from oracles import ArrayPair, SquareDiffOracle
-from utils import compute_lam_2, ring_adj_mat
+from decentralized.loggers.logger import Logger
+from decentralized.methods import DecentralizedExtragradientGT
+from decentralized.oracles.base import ArrayPair
+from decentralized.oracles.saddle_simple import SquareDiffOracle
+from decentralized.tests.test_utils.utils import gen_mix_mat
+from decentralized.utils import compute_lam_2
 
 
 def test_decentralized_extragradient():
     np.random.seed(0)
-    d = 2
+    d = 20
     num_nodes = 10
-    mix_mat = ring_adj_mat(num_nodes)
+    mix_mat = gen_mix_mat(num_nodes)
     lam = compute_lam_2(mix_mat)
 
     z_0 = ArrayPair(np.random.rand(d), np.random.rand(d))
@@ -24,7 +22,7 @@ def test_decentralized_extragradient():
 
     eta = max((1 - lam) ** 2 * gamma / (500 * L), (1 - lam) ** (4 / 3) * mu ** (1 / 3) / (40 * L ** (4 / 3)))
     eta = min(eta, (1 - lam) ** 2 / (22 * L))
-    logger = Logger()
+    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
 
     method = DecentralizedExtragradientGT(
         oracles=oracles, stepsize=eta, mix_mat=mix_mat, z_0=z_0, logger=logger, constraints=None

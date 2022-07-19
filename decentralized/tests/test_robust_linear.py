@@ -1,10 +1,6 @@
-import sys
-
-sys.path.append("../")
-
 import numpy as np
-from oracles import ArrayPair, create_robust_linear_oracle
-from utils import grad_finite_diff_saddle
+from decentralized.oracles import ArrayPair, create_robust_linear_oracle
+from decentralized.utils import grad_finite_diff_saddle
 
 
 def test_robust_linear_oracle_normed():

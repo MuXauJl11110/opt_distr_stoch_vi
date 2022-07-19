@@ -1,12 +1,15 @@
 from typing import Callable, List, Optional
 
 import numpy as np
-from loggers import Logger
-from oracles import ArrayPair, BaseSmoothSaddleOracle, LinearCombSaddleOracle
-
-from .base import BaseSaddleMethod
-from .constraints import ConstraintsL2
-from .extragradient import extragradient_solver
+from decentralized.loggers.logger import Logger
+from decentralized.methods.base import BaseSaddleMethod
+from decentralized.methods.constraints import ConstraintsL2
+from decentralized.methods.extragradient import extragradient_solver
+from decentralized.oracles.base import (
+    ArrayPair,
+    BaseSmoothSaddleOracle,
+    LinearCombSaddleOracle,
+)
 
 
 class SaddlePointOracleRegularizer(BaseSmoothSaddleOracle):

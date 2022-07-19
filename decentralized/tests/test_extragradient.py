@@ -1,16 +1,12 @@
-import sys
-
-sys.path.append("../")
-
 import numpy as np
-from loggers import Logger
-from methods import ConstraintsL2, Extragradient
-from oracles import (
-    ArrayPair,
+from decentralized.loggers import Logger
+from decentralized.methods import ConstraintsL2, Extragradient
+from decentralized.oracles.base import ArrayPair
+from decentralized.oracles.robust_linear import (
     RobustLinearOracle,
-    ScalarProdOracle,
     create_robust_linear_oracle,
 )
+from decentralized.oracles.saddle_simple import ScalarProdOracle
 
 
 def create_random_robust_linear_oracle(n: int, d: int) -> RobustLinearOracle:
@@ -43,7 +39,7 @@ def test_extragradient_run_scalar_prod():
     d = 20
     oracle = ScalarProdOracle()
     z_0 = ArrayPair(np.random.rand(d), np.random.rand(d))
-    logger = Logger()
+    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
     method = Extragradient(oracle, 0.5, z_0, tolerance=None, stopping_criteria=None, logger=logger)
     method.run(max_iter=1000)
     z_star = logger.argument_primal_value[-1]
@@ -55,7 +51,7 @@ def test_extragradient_run_scalar_prod_constrained():
     d = 20
     oracle = ScalarProdOracle()
     z_0 = ArrayPair(np.random.rand(d), np.random.rand(d))
-    logger = Logger()
+    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
     constraints = ConstraintsL2(1.0, 2.0)
     method = Extragradient(
         oracle, 0.5, z_0, tolerance=None, stopping_criteria=None, logger=logger, constraints=constraints

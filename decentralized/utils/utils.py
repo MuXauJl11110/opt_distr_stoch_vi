@@ -2,16 +2,15 @@ import datetime
 from typing import Callable, List, Optional, Tuple
 
 import numpy as np
-from loggers import Logger
-from methods import ConstraintsL2, Extragradient
-from oracles import (
+from decentralized.loggers import Logger
+from decentralized.methods import ConstraintsL2, Extragradient
+from decentralized.oracles import (
     ArrayPair,
     BaseSmoothSaddleOracle,
     LinearCombSaddleOracle,
     create_robust_linear_oracle,
 )
-
-from .compute_params import (
+from decentralized.utils.compute_params import (
     compute_robust_linear_normed_L,
     compute_robust_linear_normed_L_delta_mu,
 )

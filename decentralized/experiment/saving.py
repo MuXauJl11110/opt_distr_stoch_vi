@@ -2,7 +2,7 @@ import os
 import pickle
 from typing import List, Optional
 
-from oracles import ArrayPair
+from decentralized.oracles.base import ArrayPair
 
 
 def save_algorithms(
