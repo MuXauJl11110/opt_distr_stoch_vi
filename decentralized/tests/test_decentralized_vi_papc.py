@@ -1,5 +1,5 @@
 import numpy as np
-from decentralized.loggers.logger import Logger
+from decentralized.loggers.logger import LoggerDecentralized
 from decentralized.methods import DecentralizedVIPAPC
 from decentralized.oracles.base import ArrayPair
 from decentralized.oracles.saddle_simple import SquareDiffOracle
@@ -22,7 +22,11 @@ def test_decentralized_vi_papc():
     theta = min(1 / (2 * beta), L * np.sqrt(chi) / 3)
     eta = 1 / (3 * L * np.sqrt(chi))
     alpha = 1 - min(1 / (1 + 3 * L * np.sqrt(chi) / mu), 1 / (2 * chi))
-    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
+    logger = LoggerDecentralized(
+        default_config_path="../tests/test_utils/config_decentralized.yaml",
+        z_true=ArrayPair(np.zeros(d), np.zeros(d)),
+        g_true=ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d))),
+    )
 
     print(f"Chi:{chi}")
     print(f"Beta:{beta}")
@@ -47,8 +51,9 @@ def test_decentralized_vi_papc():
     )
 
     method.run(max_iter=1000)
-    z_star = logger.argument_primal_value[-1]
-    assert z_star.dot(z_star) <= 0.05
+    assert logger.argument_primal_distance_to_opt[-1] <= 0.05
+    assert logger.argument_primal_distance_to_consensus[-1] <= 0.5
+    assert logger.gradient_primal_distance_to_opt[-1] <= 0.05
 
 
 if __name__ == "__main__":

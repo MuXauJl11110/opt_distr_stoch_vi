@@ -1,5 +1,5 @@
 import numpy as np
-from decentralized.loggers.logger import Logger
+from decentralized.loggers.logger import Logger, LoggerDecentralized
 from decentralized.methods import (
     DecentralizedSaddleSliding,
     SaddleSliding,
@@ -22,7 +22,7 @@ def test_sliding_simple():
     eta_inner = 0.5 / (eta * L + 1)
     T_inner = int((1 + eta * L) * np.log10(1 / e))
 
-    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
+    logger = Logger(default_config_path="../tests/test_utils/config_centralized.yaml")
     method = SaddleSliding(
         oracle_g=oracle_g,
         oracle_phi=oracle_phi,
@@ -56,7 +56,11 @@ def test_decentralized_sliding_simple():
     lam = compute_lam_2(mix_mat)
     gossip_step = (1 - np.sqrt(1 - lam ** 2)) / (1 + np.sqrt(1 - lam ** 2))
 
-    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
+    logger = LoggerDecentralized(
+        default_config_path="../tests/test_utils/config_decentralized.yaml",
+        z_true=ArrayPair(np.zeros(d), np.zeros(d)),
+        g_true=ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d))),
+    )
     method = DecentralizedSaddleSliding(
         oracles=oracles,
         stepsize_outer=gamma,
@@ -72,8 +76,9 @@ def test_decentralized_sliding_simple():
     )
     method.run(max_iter=500)
 
-    z_star = logger.argument_primal_value[-1]
-    assert z_star.dot(z_star) <= 1e-2
+    assert logger.argument_primal_distance_to_opt[-1] <= 0.05
+    assert logger.argument_primal_distance_to_consensus[-1] <= 0.5
+    assert logger.gradient_primal_distance_to_opt[-1] <= 0.05
 
 
 if __name__ == "__main__":

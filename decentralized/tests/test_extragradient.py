@@ -39,7 +39,7 @@ def test_extragradient_run_scalar_prod():
     d = 20
     oracle = ScalarProdOracle()
     z_0 = ArrayPair(np.random.rand(d), np.random.rand(d))
-    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
+    logger = Logger(default_config_path="../tests/test_utils/config_centralized.yaml")
     method = Extragradient(oracle, 0.5, z_0, tolerance=None, stopping_criteria=None, logger=logger)
     method.run(max_iter=1000)
     z_star = logger.argument_primal_value[-1]
@@ -51,7 +51,7 @@ def test_extragradient_run_scalar_prod_constrained():
     d = 20
     oracle = ScalarProdOracle()
     z_0 = ArrayPair(np.random.rand(d), np.random.rand(d))
-    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
+    logger = Logger(default_config_path="../tests/test_utils/config_centralized.yaml")
     constraints = ConstraintsL2(1.0, 2.0)
     method = Extragradient(
         oracle, 0.5, z_0, tolerance=None, stopping_criteria=None, logger=logger, constraints=constraints

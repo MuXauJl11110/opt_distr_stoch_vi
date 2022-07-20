@@ -1,5 +1,5 @@
 import numpy as np
-from decentralized.loggers.logger import Logger
+from decentralized.loggers.logger import LoggerDecentralized
 from decentralized.methods import DecentralizedExtragradientGT
 from decentralized.oracles.base import ArrayPair
 from decentralized.oracles.saddle_simple import SquareDiffOracle
@@ -22,14 +22,19 @@ def test_decentralized_extragradient():
 
     eta = max((1 - lam) ** 2 * gamma / (500 * L), (1 - lam) ** (4 / 3) * mu ** (1 / 3) / (40 * L ** (4 / 3)))
     eta = min(eta, (1 - lam) ** 2 / (22 * L))
-    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
+    logger = LoggerDecentralized(
+        default_config_path="../tests/test_utils/config_decentralized.yaml",
+        z_true=ArrayPair(np.zeros(d), np.zeros(d)),
+        g_true=ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d))),
+    )
 
     method = DecentralizedExtragradientGT(
         oracles=oracles, stepsize=eta, mix_mat=mix_mat, z_0=z_0, logger=logger, constraints=None
     )
     method.run(max_iter=10000)
-    z_star = logger.argument_primal_value[-1]
-    assert z_star.dot(z_star) <= 0.05
+    assert logger.argument_primal_distance_to_opt[-1] <= 0.05
+    assert logger.argument_primal_distance_to_consensus[-1] <= 0.5
+    assert logger.gradient_primal_distance_to_opt[-1] <= 0.05
 
 
 if __name__ == "__main__":

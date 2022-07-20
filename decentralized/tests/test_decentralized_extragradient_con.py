@@ -1,5 +1,5 @@
 import numpy as np
-from decentralized.loggers.logger import Logger
+from decentralized.loggers.logger import LoggerDecentralized
 from decentralized.methods.decentralized_extragradient_con import (
     DecentralizedExtragradientCon,
 )
@@ -26,7 +26,11 @@ def test_decentralized_extragradient():
     eps = 1e-4
     eps_0 = eps * mu * gamma * (1 + gamma * L) ** 2
     con_iters = int(5 * np.sqrt(1 / (1 - lam)) * np.log(1 / eps_0))
-    logger = Logger(default_config_path="../tests/test_utils/config.yaml")
+    logger = LoggerDecentralized(
+        default_config_path="../tests/test_utils/config_decentralized.yaml",
+        z_true=ArrayPair(np.zeros(d), np.zeros(d)),
+        g_true=ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d))),
+    )
 
     method = DecentralizedExtragradientCon(
         oracles=oracles,
@@ -39,8 +43,9 @@ def test_decentralized_extragradient():
         constraints=None,
     )
     method.run(max_iter=100)
-    z_star = logger.argument_primal_value[-1]
-    assert z_star.dot(z_star) <= 0.05
+    assert logger.argument_primal_distance_to_opt[-1] <= 0.05
+    assert logger.argument_primal_distance_to_consensus[-1] <= 0.5
+    assert logger.gradient_primal_distance_to_opt[-1] <= 0.05
 
 
 if __name__ == "__main__":

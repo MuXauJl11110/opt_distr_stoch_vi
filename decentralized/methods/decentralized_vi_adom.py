@@ -26,8 +26,8 @@ class DecentralizedVIADOM(BaseSaddleMethod):
     y_0: List[ArrayPair]
         Initial guess. :math:`y^0 \in \big(\mathbb{R}^d\big)^M`
 
-    w_0: List[ArrayPair]
-        Initial guess. :math:`w^0 \in (dom g)^M`
+    z_0: List[ArrayPair]
+        Initial guess. :math:`z^0 \in (dom g)^M`
 
     eta_x, eta_y, eta_z, theta: float
         Stepsizes. :math:`\eta_x, \eta_y, \eta_z, \theta > 0`
@@ -38,17 +38,8 @@ class DecentralizedVIADOM(BaseSaddleMethod):
     nu, beta: float
         Parameters.
 
-    b: int
-        Batchsize. :math:`b \in \{1, \cdots, n\}`
-
-    p: float
-        Probability. :math:`p \in (0, 1)`
-
     gos_mat: np.ndarray
         Gossip matrix is multiplication of T gossip matrices.
-
-    n: int
-        :math:`F_m(z) \coloneqq \frac{1}{n} \sum_{i=1}^n F_{m, i}(z)`
 
     logger: Optional[Logger]
         Stores the history of the method during its iterations.
@@ -62,7 +53,7 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         oracles: List[BaseSmoothSaddleOracle],
         x_0: List[ArrayPair],
         y_0: List[ArrayPair],
-        w_0: List[ArrayPair],
+        z_0: List[ArrayPair],
         eta_x: float,
         eta_y: float,
         eta_z: float,
@@ -73,18 +64,15 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         tau: float,
         nu: float,
         beta: float,
-        b: int,
-        p: float,
         gos_mat: np.ndarray,
-        n: int,
         logger=Optional[Logger],
         constraints: Optional[ConstraintsL2] = None,
     ):
-        if len(x_0) != len(y_0) != (w_0):
+        if len(x_0) != len(y_0) != len(z_0):
             raise ValueError("Number of x^0, y^0 and w^0 should be equal!")
         self._num_nodes = len(oracles)  # M
         oracle_sum = LinearCombSaddleOracle(oracles, [1 / self._num_nodes] * self._num_nodes)
-        super().__init__(oracle_sum, w_0[0], None, None, logger)
+        super().__init__(oracle_sum, z_0[0], None, None, logger)
         self.oracle_list = oracles
 
         self.eta_x = eta_x
@@ -97,11 +85,8 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         self.tau = tau
         self.nu = nu
         self.beta = beta
-        self.b = b
-        self.p = p
 
         self.gos_mat = gos_mat
-        self.n = n
 
         if constraints is not None:
             self.constraints = constraints
@@ -114,11 +99,8 @@ class DecentralizedVIADOM(BaseSaddleMethod):
                 np.array([el.y.copy() for el in arr]),
             )
 
-        self.z_list = init_from_list(w_0)
-        self.z_list_old = init_from_list(w_0)
-
-        self.w_list = init_from_list(w_0)
-        self.w_list_old = init_from_list(w_0)
+        self.z_list = init_from_list(z_0)
+        self.z_list_old = init_from_list(z_0)
 
         self.y_list = init_from_list(y_0)
         self.y_list_old = init_from_list(y_0)
@@ -136,19 +118,10 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         self.current_step = 0
 
     def step(self):
-        sample = np.random.choice(self.n, size=(self._num_nodes, self.b), replace=False)
-        sample_half = np.random.choice(self.n, size=(self._num_nodes, self.b), replace=False)
+        self.grad_list_z = self.oracle_grad_list(self.z_list)
+        self.grad_list_z_old = self.oracle_grad_list(self.z_list_old)
 
-        self.grad_list_z_batched = self.oracle_grad_list(self.z_list, sample)
-        self.grad_list_z_old_batched = self.oracle_grad_list(self.z_list_old, sample)
-        self.grad_list_w_old_batched = self.oracle_grad_list(self.w_list_old, sample)
-        self.grad_list_w_old = self.oracle_grad_list(self.w_list_old, np.ones((self.n, 1)))
-
-        delta = (
-            (1 + self.alpha) * self.grad_list_z_batched
-            - self.grad_list_w_old_batched
-            - self.alpha * self.grad_list_z_old_batched
-        ) / self.b + self.grad_list_w_old
+        delta = (1 + self.alpha) * self.grad_list_z - self.alpha * self.grad_list_z_old
         Delta_z = delta - self.nu * self.z_list - self.y_list - self.alpha * (self.y_list - self.y_list_old)
 
         self.z_list_old = self.z_list.copy()
@@ -164,11 +137,9 @@ class DecentralizedVIADOM(BaseSaddleMethod):
             + self.gamma * (self.y_list + self.x_list + self.nu * self.z_list_old)
         )
 
-        self.grad_list_z_batched = self.oracle_grad_list(self.z_list, sample_half)
-        self.grad_list_w_batched = self.oracle_grad_list(self.w_list, sample_half)
-        self.grad_list_w = self.oracle_grad_list(self.w_list, np.ones(self.n))
+        self.grad_list_z = self.oracle_grad_list(self.z_list)
 
-        delta_half = (self.grad_list_z_batched - self.grad_list_w_batched) / self.b + self.grad_list_w
+        delta_half = self.grad_list_z
 
         Delta_x = (y_list_c + x_list_c) / self.nu + self.beta * (self.x_list + delta_half)
         x_mixed = ArrayPair(
@@ -189,15 +160,11 @@ class DecentralizedVIADOM(BaseSaddleMethod):
             self.gos_mat @ (y_list_c.y + x_list_c.y),
         )
 
-        self.w_list_old = self.w_list.copy()
-        if np.random.random() < self.p:
-            self.w_list = self.z_list_old.copy()
-        else:
-            self.w_list = self.w_list_old.copy()
-
         self.current_step += 1
 
-    def oracle_grad_list(self, z: ArrayPair, batch: np.ndarray) -> ArrayPair:
+        self.z = ArrayPair(self.z_list.x.mean(axis=0), self.z_list.y.mean(axis=0))
+
+    def oracle_grad_list(self, z: ArrayPair) -> ArrayPair:
         """
         Compute oracle gradients at each computational network node.
 
@@ -214,9 +181,8 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         grad: ArrayPair
         """
         res = ArrayPair(np.empty_like(z.x), np.empty_like(z.y))
-        print(batch.shape)
         for i in range(self._num_nodes):
-            grad = self.oracle_list[i].grad(ArrayPair(z.x[i], z.y[i]), batch[i])
+            grad = self.oracle_list[i].grad(ArrayPair(z.x[i], z.y[i]))
             res.x[i] = grad.x
             res.y[i] = grad.y
         return res
