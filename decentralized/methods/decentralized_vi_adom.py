@@ -64,7 +64,7 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         tau: float,
         nu: float,
         beta: float,
-        gos_mat: np.ndarray,
+        # gos_mat: np.ndarray,
         logger=Optional[Logger],
         constraints: Optional[ConstraintsL2] = None,
     ):
@@ -86,7 +86,7 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         self.nu = nu
         self.beta = beta
 
-        self.gos_mat = gos_mat
+        # self.gos_mat = gos_mat
 
         if constraints is not None:
             self.constraints = constraints

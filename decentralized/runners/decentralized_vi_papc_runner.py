@@ -4,10 +4,11 @@ import numpy as np
 from decentralized.loggers import LoggerDecentralized
 from decentralized.methods import ConstraintsL2, DecentralizedVIPAPC
 from decentralized.oracles import ArrayPair, BaseSmoothSaddleOracle
+from decentralized.runners.base import BaseRunner
 from decentralized.utils import compute_lam
 
 
-class DecentralizedVIPAPCRunner(object):
+class DecentralizedVIPAPCRunner(BaseRunner):
     def __init__(
         self,
         oracles: List[BaseSmoothSaddleOracle],

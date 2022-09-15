@@ -2,7 +2,7 @@ from typing import Tuple
 
 import networkx as nx
 import numpy as np
-from decentralized.utils.compute_params import compute_lam
+from src.utils.compute_params import compute_lam
 
 
 def gen_matrices_decentralized(
@@ -101,7 +101,9 @@ def grid_adj_mat(n: int, m: int):
     """
 
     graph = nx.generators.grid_2d_graph(n, m)
-    return np.array(nx.linalg.graphmatrix.adjacency_matrix(graph).todense()).astype(np.float64)
+    return np.array(nx.linalg.graphmatrix.adjacency_matrix(graph).todense()).astype(
+        np.float64
+    )
 
 
 def star_adj_mat(n: int):
@@ -119,7 +121,9 @@ def star_adj_mat(n: int):
     """
 
     graph = nx.generators.star_graph(n - 1)
-    return np.array(nx.linalg.graphmatrix.adjacency_matrix(graph).todense()).astype(np.float64)
+    return np.array(nx.linalg.graphmatrix.adjacency_matrix(graph).todense()).astype(
+        np.float64
+    )
 
 
 def ring_gos_mat(n: int):
@@ -192,7 +196,9 @@ def metropolis_weights(adj_mat: np.ndarray):
         Adjacency matrix
     """
 
-    weights = adj_mat / (1 + np.maximum(adj_mat.sum(1, keepdims=True), adj_mat.sum(0, keepdims=True)))
+    weights = adj_mat / (
+        1 + np.maximum(adj_mat.sum(1, keepdims=True), adj_mat.sum(0, keepdims=True))
+    )
     ids = np.arange(adj_mat.shape[0])
     weights[ids, ids] = 1 - np.sum(weights, axis=0)
     return weights

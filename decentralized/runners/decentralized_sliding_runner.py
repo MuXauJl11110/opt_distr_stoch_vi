@@ -4,10 +4,11 @@ import numpy as np
 from decentralized.loggers import Logger
 from decentralized.methods import DecentralizedSaddleSliding
 from decentralized.oracles import ArrayPair, BaseSmoothSaddleOracle
+from decentralized.runners.base import BaseRunner
 from decentralized.utils import compute_lam_2
 
 
-class DecentralizedSaddleSlidingRunner(object):
+class DecentralizedSaddleSlidingRunner(BaseRunner):
     def __init__(
         self,
         oracles: List[BaseSmoothSaddleOracle],

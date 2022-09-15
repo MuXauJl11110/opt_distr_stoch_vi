@@ -1,0 +1,55 @@
+available_parameters: !!set { r, gamma }
+available_schedulers: !!set { Lambda }
+
+scheduler_functions:
+  Lambda:
+    object: self
+    name: lambda
+    kwargs: {}
+
+schema:
+  - !!python/tuple [
+      state,
+      { steps_per_state: "And(Use(int), lambda n: n > 0)" },
+    ]
+
+  - !!python/tuple [
+      default_state,
+      { steps_per_state: "And(Use(int), lambda n: n > 0)", verbose: bool },
+    ]
+
+  - !!python/tuple [
+      default_epoch,
+      {
+        duration: "And(Use(int), lambda n: n > 0)",
+        default_state: self.schema_default_state,
+        states: "Or({}, {And(Use(int), lambda n: n >= 0): self.schema_state})",
+      },
+    ]
+
+  #verbose: bool,
+  - !!python/tuple [
+      epoch,
+      {
+        interval: tuple,
+        default_state: self.schema_default_state,
+        states: "Or({}, {And(Use(int), lambda n: n >= 0): self.schema_state})",
+      },
+    ]
+
+  #verbose: bool,
+  - !!python/tuple [
+      scheduler_function,
+      { object: object, name: str, kwargs: dict },
+    ]
+
+  - !!python/tuple [
+      scheduler,
+      {
+        source: str,
+        target: str,
+        scheduler_function: "Or(*self.schema_scheduler_function.keys())",
+        step: "And(Use(int), lambda n: n > 0)",
+        verbose: bool,
+      },
+    ]

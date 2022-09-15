@@ -1,0 +1,9 @@
+synthetic:
+  d: 20
+  l: 30
+  mean: 5.0
+  noise:
+  - '100.0'
+  num_nodes: 25
+  seed: 30
+  std: 2.0

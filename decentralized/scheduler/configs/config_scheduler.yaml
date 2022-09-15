@@ -1,0 +1,16 @@
+default_epoch:
+  duration: 1
+  default_state:
+    steps_per_state: 5
+  states: {}
+  verbose: False
+epochs:
+  - interval: !!python/tuple [1, 4]
+    default_state:
+      steps_per_state: 5
+    states:
+      1:
+        steps_per_state: 7
+      3:
+        steps_per_state: 1
+    verbose: False

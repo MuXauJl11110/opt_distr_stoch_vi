@@ -1,0 +1,80 @@
+available_graph_types: !!set { classic, random }
+available_topologies:
+  classic:
+    - complete
+    - star
+    - cycle
+  random:
+    - erdos_renyi
+
+topology:
+  complete:
+    type: classic
+    object: nx.generators.classic
+    func: complete_graph
+    bias: False
+
+  star:
+    type: classic
+    object: nx.generators.classic
+    func: star_graph
+    bias: True
+
+  cycle:
+    type: classic
+    object: nx.generators.classic
+    func: cycle_graph
+    bias: False
+
+  erdos_renyi:
+    type: random
+    object: nx.generators.random_graphs
+    func: fast_gnp_random_graph
+    bias: False
+
+schema:
+  - !!python/tuple [
+      {
+        object: str,
+        func: str,
+        directed: bool,
+        fixed: bool,
+        bias: bool,
+        MST: bool,
+      },
+
+      !!python/tuple [
+        { type: classic, args: { n: int } },
+        {
+          type: random,
+          args:
+            {
+              n: int,
+              p: "And(float, Use(lambda x: x > 0 and x < 1))",
+              seed: "And(int, Use(lambda n: n > 0))",
+            },
+        },
+      ],
+    ]
+
+  - !!python/tuple [state, Or(*self.schema_types)]
+
+  - !!python/tuple [default_state, Or(*self.schema_types)]
+
+  - !!python/tuple [
+      default_epoch,
+      {
+        duration: "And(Use(int), lambda n: n > 0)",
+        default_state: self.schema_default_state,
+        states: "Or({}, {And(Use(int), lambda n: n >= 0): self.schema_state})",
+      },
+    ]
+
+  - !!python/tuple [
+      epoch,
+      {
+        interval: tuple,
+        default_state: self.schema_default_state,
+        states: "Or({}, {And(Use(int), lambda n: n >= 0): self.schema_state})",
+      },
+    ]

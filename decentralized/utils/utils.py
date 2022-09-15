@@ -2,15 +2,15 @@ import datetime
 from typing import Callable, List, Optional, Tuple
 
 import numpy as np
-from decentralized.loggers import Logger
-from decentralized.methods import ConstraintsL2, Extragradient
-from decentralized.oracles import (
+from src.logger import LoggerCentralized
+from src.method import ConstraintsL2, Extragradient
+from src.oracles import (
     ArrayPair,
     BaseSmoothSaddleOracle,
     LinearCombSaddleOracle,
     create_robust_linear_oracle,
 )
-from decentralized.utils.compute_params import (
+from src.utils.compute_params import (
     compute_robust_linear_normed_L,
     compute_robust_linear_normed_L_delta_mu,
 )
@@ -92,7 +92,11 @@ def hess_finite_diff(func, x, eps=1e-5):
     """
     from itertools import combinations_with_replacement
 
-    x, fval, dnum = x.astype(np.float64), func(x).astype(np.float64), np.zeros((x.size, x.size), dtype=np.float64)
+    x, fval, dnum = (
+        x.astype(np.float64),
+        func(x).astype(np.float64),
+        np.zeros((x.size, x.size), dtype=np.float64),
+    )
     n = x.size
     hess = np.zeros((n, n))
 
@@ -101,7 +105,9 @@ def hess_finite_diff(func, x, eps=1e-5):
         dnum_i[i] = eps
         dnum_j = np.zeros(x.size)
         dnum_j[j] = eps
-        hess[i][j] = (func(x + dnum_i + dnum_j) - func(x + dnum_i) - func(x + dnum_j) + fval) / eps ** 2
+        hess[i][j] = (
+            func(x + dnum_i + dnum_j) - func(x + dnum_i) - func(x + dnum_j) + fval
+        ) / eps**2
         hess[j][i] = hess[i][j]
     return np.array(hess)
 
@@ -116,9 +122,9 @@ def solve_with_extragradient(
     num_iter: int,
     max_time: Optional[float],
     z_true: Optional[ArrayPair] = None,
-) -> Logger:
+) -> LoggerCentralized:
     print("Solving with extragradient...")
-    logger_extragradient = Logger(z_true=z_true)
+    logger_extragradient = LoggerCentralized(z_true=z_true)
     extragradient = Extragradient(
         oracle=oracle,
         stepsize=stepsize,
@@ -153,7 +159,9 @@ def solve_with_extragradient_real_data(
     z_0 = ArrayPair.zeros(A.shape[1])
     oracle = create_robust_linear_oracle(A, b, regcoef_x, regcoef_y, normed=True)
     print(f"L = {L:.3f}")
-    return solve_with_extragradient(oracle, 1.0 / L, r_x, r_y, z_0, tolerance, num_iter, max_time)
+    return solve_with_extragradient(
+        oracle, 1.0 / L, r_x, r_y, z_0, tolerance, num_iter, max_time
+    )
 
 
 def get_oracles(
@@ -175,13 +183,19 @@ def get_oracles(
     for part_size in part_sizes:
         A_small = A[start : start + part_size]
         b_small = b[start : start + part_size]
-        oracles.append(create_robust_linear_oracle(A_small, b_small, regcoef_x, regcoef_y, normed=True))
+        oracles.append(
+            create_robust_linear_oracle(
+                A_small, b_small, regcoef_x, regcoef_y, normed=True
+            )
+        )
         start += part_size
         n_small = b_small.shape[0]
         A_grad += A_small.T @ A_small / n_small + regcoef_x
         b_grad += A_small.T @ b_small / n_small
 
-    L, delta, mu = compute_robust_linear_normed_L_delta_mu(A, b, None, num_nodes, r_x, r_y, regcoef_x, regcoef_y)
+    L, delta, mu = compute_robust_linear_normed_L_delta_mu(
+        A, b, None, num_nodes, r_x, r_y, regcoef_x, regcoef_y
+    )
     print("L = {:.3f}, delta = {:.3f}, mu = {:.3f}".format(L, delta, mu))
     oracle_mean = LinearCombSaddleOracle(oracles, [1 / num_nodes] * num_nodes)
     return oracles, oracle_mean, L, delta, mu, A_grad, b_grad

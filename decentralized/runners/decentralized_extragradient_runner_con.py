@@ -4,10 +4,11 @@ import numpy as np
 from decentralized.loggers import Logger
 from decentralized.methods import ConstraintsL2, DecentralizedExtragradientCon
 from decentralized.oracles import BaseSmoothSaddleOracle
+from decentralized.runners.base import BaseRunner
 from decentralized.utils import compute_lam_2
 
 
-class DecentralizedExtragradientConRunner(object):
+class DecentralizedExtragradientConRunner(BaseRunner):
     def __init__(
         self,
         oracles: List[BaseSmoothSaddleOracle],

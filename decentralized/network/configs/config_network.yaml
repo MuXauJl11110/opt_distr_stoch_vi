@@ -1,0 +1,62 @@
+# default_epoch:
+#   duration: 2
+#   default_state:
+#     type: classic
+#     object: nx.generators.classic
+#     func: complete_graph
+#     directed: False
+#     fixed: True
+#     bias: False
+#     args:
+#       n: 25
+#     MST: True
+#   states: {}
+# epochs:
+#   - interval: !!python/tuple [1, 4]
+#     default_state:
+#       type: classic
+#       object: nx.generators.classic
+#       func: cycle_graph
+#       directed: False
+#       fixed: True
+#       bias: False
+#       args:
+#         n: 25
+#       MST: True
+#     states:
+#       1:
+#         type: classic
+#         object: nx.generators.classic
+#         func: complete_graph
+#         directed: False
+#         fixed: True
+#         bias: False
+#         MST: False
+#         args:
+#           n: 25
+#       3:
+#         type: random
+#         object: nx.generators.random_graphs
+#         func: fast_gnp_random_graph
+#         directed: False
+#         fixed: True
+#         bias: False
+#         MST: True
+#         args:
+#           n: 25
+#           p: 0.9
+#           seed: 30
+default_epoch:
+  duration: 1
+  default_state:
+    type: classic
+    object: nx
+    func: complete_graph
+    directed: False
+    fixed: True
+    bias: False
+    args:
+      n: 25
+    MST: True
+  states: {}
+epochs: []

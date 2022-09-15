@@ -1,3 +1,4 @@
+from decentralized.runners.base import BaseRunner
 from decentralized.runners.decentralized_extragradient_runner import (
     DecentralizedExtragradientGTRunner,
 )
