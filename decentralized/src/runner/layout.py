@@ -57,8 +57,10 @@ class RunnerLayout(object):
             if method_cfg["use_method"]:
                 runner = RunnerLayout.runner_сfg[method_name][0]
                 if method_cfg["Parameters:"]["use_precomputed"]:
-                    pass
-
+                    method_cfg["Parameters:"] = (
+                        method_cfg["Parameters:"] | self.optional_cfg
+                    )
+                print(method_cfg["Parameters:"])
                 yield (
                     method_name,
                     call_with_redundant(
@@ -83,7 +85,8 @@ class RunnerLayout(object):
 
         return {k: get_vector(v, d) for k, v in cfg.items()}
 
-    def __call__(self, d: int, general_cfg: dict):
+    def __call__(self, d: int, general_cfg: dict, optional_cfg: dict):
         self.d = d
         self.general_cfg = general_cfg
+        self.optional_cfg = optional_cfg
         return self

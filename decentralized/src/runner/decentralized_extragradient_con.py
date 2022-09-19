@@ -55,13 +55,13 @@ class DecentralizedExtragradientConRunner(BaseRunner):
         if precompute_lam:
             self.compute_lam()
         eps_0 = self.eps * self.mu * self.stepsize * (1 + self.stepsize * self.L) ** 2
-        self.con_iters = int(np.sqrt(1 / abs(1 - self._lam)) * np.log(1 / eps_0))
+        self.con_iters = int(np.sqrt(1 / 1 - self._lam) * np.log(1 / eps_0))
 
     def compute_gossip_step(self, precompute_lam: Optional[bool] = True):
         if precompute_lam:
             self.compute_lam()
-        self.gossip_step = (1 - np.sqrt(abs(1 - self._lam**2))) / (
-            1 + np.sqrt(abs(1 - self._lam**2))
+        self.gossip_step = (1 - np.sqrt(1 - self._lam**2)) / (
+            1 + np.sqrt(1 - self._lam**2)
         )
         # rough estimate on con_iters (lower than actual)
 

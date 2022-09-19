@@ -54,7 +54,7 @@ class DecentralizedSaddleSlidingRunner(BaseRunner):
     def precompute_con_iters_params(self):
         self._omega = 2 * np.sqrt(self.r_x**2 + self.r_y**2)
         self._g = 0.0  # upper bound on gradient at optimum; let it be 0 for now
-        self._rho = abs(1 - self._lam)
+        self._rho = 1 - self._lam
         self._num_nodes = len(self.oracles)
 
     def compute_stepsize_outer(self):
@@ -78,8 +78,6 @@ class DecentralizedSaddleSlidingRunner(BaseRunner):
         if precompute:
             self.precompute_con_iters_params()
 
-        print(self._rho)
-        print(self.eps, self.stepsize_outer, self.mu)
         self.con_iters_grad = int(
             1
             / np.sqrt(self._rho)

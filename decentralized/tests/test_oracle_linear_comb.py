@@ -1,10 +1,6 @@
 import numpy as np
-from decentralized.oracles import (
-    ArrayPair,
-    LinearCombSaddleOracle,
-    create_robust_linear_oracle,
-)
-from decentralized.utils import grad_finite_diff_saddle
+from src.oracles import ArrayPair, LinearCombSaddleOracle, create_robust_linear_oracle
+from src.utils import grad_finite_diff_saddle
 
 
 def test_oracle_linear_comb():

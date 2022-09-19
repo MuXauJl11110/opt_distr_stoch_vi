@@ -14,7 +14,7 @@ VIADOM_container = Container(
                     "L",
                     0.001,
                     0,
-                    10,
+                    100000,
                     0.000001,
                 ),
                 NumericText(
@@ -22,7 +22,7 @@ VIADOM_container = Container(
                     r"$\bar{L}$",
                     0.001,
                     0,
-                    10,
+                    100000,
                     0.000001,
                     r_label="L_avg",
                 ),

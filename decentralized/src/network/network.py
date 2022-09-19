@@ -9,6 +9,7 @@ import networkx as nx
 import numpy as np
 from definitions import ROOT_DIR
 from src.config_managers.network import NetworkConfigManager
+from src.utils import metropolis_weights
 
 
 class Network(object):
@@ -113,7 +114,7 @@ class Network(object):
 
         def get_L(G):
             self.nodelist = (
-                None if config["fixed"] else np.random.permutation(num_nodes)
+                None if config["fixed"] else np.random.permutation(self.num_nodes)
             )
 
             if self.matrix_type == "gos_mat":
@@ -129,7 +130,9 @@ class Network(object):
                     ).toarray()
                 ).astype("float64")
             else:
-                L = nx.adjacency_matrix(G, nodelist=self.nodelist).todense()
+                L = metropolis_weights(
+                    nx.adjacency_matrix(G, nodelist=self.nodelist).toarray()
+                )
 
             return L
 

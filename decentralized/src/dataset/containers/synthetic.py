@@ -15,7 +15,7 @@ synthetic_container = Container(
         Tags(
             "TagsInput",
             "Noise",
-            ["100.0"],
+            ["0.0001"],
             [str(i) for i in [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0]],
             r_label="noise",
         ),

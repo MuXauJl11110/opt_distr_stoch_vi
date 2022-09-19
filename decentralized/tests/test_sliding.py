@@ -1,13 +1,9 @@
 import numpy as np
-from decentralized.loggers.logger import Logger, LoggerDecentralized
-from decentralized.methods import (
-    DecentralizedSaddleSliding,
-    SaddleSliding,
-    extragradient_solver,
-)
-from decentralized.oracles import ArrayPair, ScalarProdOracle, SquareDiffOracle
 from decentralized.tests.test_utils.utils import gen_mix_mat
-from decentralized.utils import compute_lam_2
+from src.logger import LoggerCentralized, LoggerDecentralized
+from src.method import DecentralizedSaddleSliding, SaddleSliding, extragradient_solver
+from src.oracles import ArrayPair, ScalarProdOracle, SquareDiffOracle
+from src.utils import compute_lam_2
 
 
 def test_sliding_simple():
@@ -18,7 +14,7 @@ def test_sliding_simple():
     oracle_phi = SquareDiffOracle(coef_x=0.5, coef_y=0.5)
     L, mu, delta = 1.0, 1.0, 0.01
     eta = min(1.0 / (2 * delta), 1 / (6 * mu))
-    e = min(0.25, 1 / (64 / (eta * mu) + 64 * eta * L ** 2 / mu))
+    e = min(0.25, 1 / (64 / (eta * mu) + 64 * eta * L**2 / mu))
     eta_inner = 0.5 / (eta * L + 1)
     T_inner = int((1 + eta * L) * np.log10(1 / e))
 
@@ -45,16 +41,24 @@ def test_decentralized_sliding_simple():
     num_nodes = 10
     mix_mat = gen_mix_mat(num_nodes)
     z_0 = ArrayPair(np.random.rand(d), np.random.rand(d))
-    oracles = [SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes) for m in range(1, num_nodes + 1)]
+    oracles = [
+        SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes)
+        for m in range(1, num_nodes + 1)
+    ]
     L = 2.0
     mu = (num_nodes + 1) / num_nodes
     delta = (num_nodes - 1) / num_nodes
     gamma = min(1.0 / (7 * delta), 1 / (12 * mu))  # outer step-size
-    e = 0.5 / (2 + 12 * gamma ** 2 * delta ** 2 + 4 / (gamma * mu) + (8 * gamma * delta ** 2) / mu)
+    e = 0.5 / (
+        2
+        + 12 * gamma**2 * delta**2
+        + 4 / (gamma * mu)
+        + (8 * gamma * delta**2) / mu
+    )
     gamma_inner = 0.5 / (gamma * L + 1)
     T_inner = int((1 + gamma * L) * np.log10(1 / e))
     lam = compute_lam_2(mix_mat)
-    gossip_step = (1 - np.sqrt(1 - lam ** 2)) / (1 + np.sqrt(1 - lam ** 2))
+    gossip_step = (1 - np.sqrt(1 - lam**2)) / (1 + np.sqrt(1 - lam**2))
 
     logger = LoggerDecentralized(
         default_config_path="../tests/test_utils/config_decentralized.yaml",

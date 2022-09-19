@@ -1,41 +1,64 @@
 import numpy as np
-import pytest
-from decentralized.loggers.logger import LoggerDecentralized
-from decentralized.methods import DecentralizedVIADOM
-from decentralized.oracles.base import ArrayPair
-from decentralized.oracles.saddle_simple import SquareDiffOracle
-from decentralized.utils import compute_lam, ring_gos_mat
+from src.config_managers import NetworkConfigManager
+from src.network import Network
+from src.oracles.base import ArrayPair
+from src.oracles.saddle_simple import SquareDiffOracle
+from src.runner import DecentralizedVIADOMRunner
+from src.scheduler import Scheduler
+from src.utils import compute_lam
 
 
-@pytest.mark.tryfirst
 def test_decentralized_vi_adom():
     np.random.seed(0)
     d = 20
     num_nodes = 10
-    W = ring_gos_mat(num_nodes)
-    lam = compute_lam(W)[0]
+    num_states = 50
 
-    oracles = [SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes) for m in range(1, num_nodes + 1)]
+    oracles = [
+        SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes)
+        for m in range(1, num_nodes + 1)
+    ]
     L = 2.0
-    b = d
+    b = 1
     L_avg = L
     mu = (num_nodes + 1) / num_nodes
 
+    method_runner = DecentralizedVIADOMRunner(b, L, L_avg, mu, np.inf, np.inf)
+
+    network = Network(
+        num_states,
+        num_nodes,
+        "gos_mat",
+        config_manager=NetworkConfigManager("tests/test_utils/network.yaml"),
+    )
+    gos_mat, _, _ = network.peek()
+    x_0 = ArrayPair(np.zeros(d), np.zeros(d))
+    y_0 = ArrayPair(np.random.rand(d), np.zeros(d))
+    z_0 = ArrayPair(np.random.rand(d), np.zeros(d))
+    z_true = ArrayPair(np.zeros(d), np.zeros(d))
+    g_true = ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d)))
+
+    method_runner.create_method(oracles, gos_mat, x_0, y_0, z_0, z_true, g_true)
+    scheduler = Scheduler(
+        method_runner=method_runner,
+        network=network,
+    )
+
+    lam = compute_lam(gos_mat)[0]
     chi = 1 / lam
     omega = 1 / 16
     theta = 1 / 2
-    gamma = min(mu / (16 * (L ** 2)), np.inf)  # , b * omega / (24 * (L_avg ** 2) * eta_z)
+    gamma = min(
+        mu / (16 * (L**2)), np.inf
+    )  # , b * omega / (24 * (L_avg ** 2) * eta_z)
     beta = 5 * gamma
     nu = mu / 4
     alpha = 1 / 2
     tau = min(mu / (32 * L * chi), mu * np.sqrt(b * omega) / (32 * L_avg))
-    eta_x = min(1 / (900 * chi * gamma), nu / (36 * tau * (chi ** 2)))
+    eta_x = min(1 / (900 * chi * gamma), nu / (36 * tau * (chi**2)))
     eta_y = min(1 / (4 * gamma), nu / (8 * tau))
-    eta_z = min(1 / (8 * L * chi), 1 / (32 * eta_y), np.sqrt(alpha * b * omega) / (8 * L_avg))
-    logger = LoggerDecentralized(
-        default_config_path="../tests/test_utils/config_decentralized.yaml",
-        z_true=ArrayPair(np.zeros(d), np.zeros(d)),
-        g_true=ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d))),
+    eta_z = min(
+        1 / (8 * L * chi), 1 / (32 * eta_y), np.sqrt(alpha * b * omega) / (8 * L_avg)
     )
 
     print(f"chi: {chi}")
@@ -50,35 +73,13 @@ def test_decentralized_vi_adom():
     print(f"eta_y: {eta_y}")
     print(f"eta_z: {eta_z}")
 
-    x_0 = ArrayPair(np.zeros(d), np.zeros(d))
-    x_0_list = [x_0] * num_nodes
-    y_0 = ArrayPair(np.random.rand(d), np.zeros(d))
-    y_0_list = [y_0] * num_nodes
-    z_0 = ArrayPair(np.random.rand(d), np.zeros(d))
-    z_0_list = [z_0] * num_nodes
-    method = DecentralizedVIADOM(
-        oracles=oracles,
-        x_0=x_0_list,
-        y_0=y_0_list,
-        z_0=z_0_list,
-        eta_x=eta_x,
-        eta_y=eta_y,
-        eta_z=eta_z,
-        theta=theta,
-        alpha=alpha,
-        gamma=gamma,
-        omega=omega,
-        tau=tau,
-        nu=nu,
-        beta=beta,
-        gos_mat=W,
-        logger=logger,
-    )
+    for _ in scheduler:
+        pass
 
-    method.run(max_iter=2000)
-    assert logger.argument_primal_distance_to_opt[-1] <= 0.05
-    assert logger.argument_primal_distance_to_consensus[-1] <= 0.5
-    assert logger.gradient_primal_distance_to_opt[-1] <= 0.05
+    print(method_runner.logger.argument_primal_distance_to_opt)
+    assert method_runner.logger.argument_primal_distance_to_opt[-1] <= 0.05
+    assert method_runner.logger.argument_primal_distance_to_consensus[-1] <= 0.5
+    assert method_runner.logger.gradient_primal_distance_to_opt[-1] <= 0.05
 
 
 if __name__ == "__main__":

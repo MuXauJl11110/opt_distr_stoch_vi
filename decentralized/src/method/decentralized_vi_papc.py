@@ -34,8 +34,8 @@ class DecentralizedVIPAPC(BaseSaddleMethod):
     def __init__(
         self,
         oracles: List[BaseSmoothSaddleOracle],
-        z_0: List[ArrayPair],
-        y_0: List[ArrayPair],
+        z_0: ArrayPair,
+        y_0: ArrayPair,
         eta: float,
         theta: float,
         alpha: float,
@@ -43,8 +43,6 @@ class DecentralizedVIPAPC(BaseSaddleMethod):
         gos_mat: np.ndarray,
         constraints: Optional[ConstraintsL2] = None,
     ):
-        if len(z_0) != len(y_0):
-            raise ValueError("Number of x^0 and y^0 should be equal!")
         self._num_nodes = len(oracles)  # M
         self.oracle_list = oracles
 
@@ -60,23 +58,21 @@ class DecentralizedVIPAPC(BaseSaddleMethod):
         else:
             self.constraints = ConstraintsL2(+np.inf, +np.inf)
 
-        self.z_list = ArrayPair(
-            np.array([z.x.copy() for z in z_0]),
-            np.array([z.y.copy() for z in z_0]),
-        )
-        self.z_list_old = ArrayPair(
-            np.array([z.x.copy() for z in z_0]),
-            np.array([z.y.copy() for z in z_0]),
-        )
+        def init_from_pair(arr_pair: ArrayPair):
+            return ArrayPair(
+                np.tile(arr_pair.x.copy(), self._num_nodes).reshape(
+                    self._num_nodes, arr_pair.x.shape[0]
+                ),
+                np.tile(arr_pair.y.copy(), self._num_nodes).reshape(
+                    self._num_nodes, arr_pair.y.shape[0]
+                ),
+            )
 
-        self.y_list = ArrayPair(
-            np.array([z.x.copy() for z in y_0]),
-            np.array([z.y.copy() for z in y_0]),
-        )
-        self.y_list_old = ArrayPair(
-            np.array([z.x.copy() for z in y_0]),
-            np.array([z.y.copy() for z in y_0]),
-        )
+        self.z_list = init_from_pair(z_0)
+        self.z_list_old = init_from_pair(z_0)
+
+        self.y_list = init_from_pair(y_0)
+        self.y_list_old = init_from_pair(y_0)
 
     def step(self):
         self.grad_list_z = self.oracle_grad_list(self.z_list)

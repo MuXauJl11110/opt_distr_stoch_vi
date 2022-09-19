@@ -3,9 +3,9 @@ default_epoch:
     MST: false
     args: {}
     directed: false
-    fixed: true
+    fixed: false
     plot: false
-    topology: cycle
+    topology: complete
   duration: 1
   states: {}
 epochs: []

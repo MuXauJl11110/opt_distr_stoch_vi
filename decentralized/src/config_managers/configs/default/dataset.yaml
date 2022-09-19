@@ -3,7 +3,7 @@ synthetic:
   l: 30
   mean: 5.0
   noise:
-  - '100.0'
+  - '0.0001'
   num_nodes: 25
   seed: 30
   std: 2.0

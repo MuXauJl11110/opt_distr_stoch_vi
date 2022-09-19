@@ -55,7 +55,7 @@ class DecentralizedExtragradientGTRunner(BaseRunner):
     def compute_method_params(self):
         self.compute_stepsize()
 
-    def update_method_params(self, eta: Optional[float] = None):
+    def update_method_params(self, stepsize: Optional[float] = None):
         super().update_method_params(locals())
 
     def update_matrix(self, mix_mat: np.ndarray):

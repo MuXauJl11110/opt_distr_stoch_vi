@@ -80,7 +80,7 @@ class Experiment(object):
                                         NumericText(
                                             "BoundedFloatText",
                                             "$r_x$",
-                                            1,
+                                            5.0,
                                             0,
                                             100,
                                             0.1,
@@ -140,6 +140,15 @@ class Experiment(object):
                 dataset_cfg["num_nodes"],
                 **self.layout.value["Runner"]["General:"],
             )
+            optional_cfg = {
+                "oracles": oracles,
+                "L": L,
+                "L_avg": L,
+                "delta": delta,
+                "eps": 1e-10,
+                "mu": mu,
+                "gamma": mu,
+            }
 
             x = np.linalg.lstsq(A_grad, b_grad, rcond=None)[0]
             z_true = ArrayPair(x, np.zeros(A.shape[1]))
@@ -159,6 +168,7 @@ class Experiment(object):
                     for method_name, method_runner, initial_guess in self.runner_layout(
                         d=dataset_cfg["d"],
                         general_cfg=self.layout.value["Runner"]["General:"],
+                        optional_cfg=optional_cfg,
                     ):
                         network = Network(
                             int(states),
@@ -233,7 +243,7 @@ class Experiment(object):
         if not os.path.exists(save_folder):
             os.makedirs(save_folder)
 
-        with open(os.path.join(save_folder, f"logger_{method_name}"), "wb") as f:
+        with open(os.path.join(save_folder, f"logger_{method_name}.pkl"), "wb") as f:
             pickle.dump(logger, f)
-        with open(os.path.join(save_folder, f"network_{method_name}"), "wb") as f:
+        with open(os.path.join(save_folder, f"network_{method_name}.pkl"), "wb") as f:
             pickle.dump(network, f)

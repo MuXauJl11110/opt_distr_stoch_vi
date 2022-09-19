@@ -9,7 +9,7 @@ EG_CON_container = Container(
         Container(
             "VBox",
             [
-                NumericText("BoundedFloatText", "L", 0.001, 0, 10, 0.000001),
+                NumericText("BoundedFloatText", "L", 0.001, 0, 100000, 0.000001),
                 NumericText(
                     "BoundedFloatText", "$\mu$", 0.01, 0, 10, 0.000001, r_label="mu"
                 ),
@@ -18,7 +18,7 @@ EG_CON_container = Container(
                     r"$\varepsilon$",
                     0.01,
                     0,
-                    10,
+                    100000,
                     0.000001,
                     r_label="eps",
                 ),
