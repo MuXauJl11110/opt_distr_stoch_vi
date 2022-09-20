@@ -51,6 +51,8 @@ class DecentralizedExtragradientGTRunner(BaseRunner):
             (1 - _lam) ** (4 / 3) * self.mu ** (1 / 3) / (40 * self.L ** (4 / 3)),
         )
         self.stepsize = min(eta, (1 - _lam) ** 2 / (22 * self.L))
+        print(self.stepsize)
+        print(self.mix_mat)
 
     def compute_method_params(self):
         self.compute_stepsize()

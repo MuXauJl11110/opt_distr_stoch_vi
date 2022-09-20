@@ -60,7 +60,6 @@ class RunnerLayout(object):
                     method_cfg["Parameters:"] = (
                         method_cfg["Parameters:"] | self.optional_cfg
                     )
-                print(method_cfg["Parameters:"])
                 yield (
                     method_name,
                     call_with_redundant(
