@@ -15,7 +15,10 @@ def test_decentralized_vi_adom():
     W = ring_gos_mat(num_nodes)
     lam = compute_lam(W)[0]
 
-    oracles = [SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes) for m in range(1, num_nodes + 1)]
+    oracles = [
+        SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes)
+        for m in range(1, num_nodes + 1)
+    ]
     L = 2.0
     b = d
     L_avg = L
@@ -24,14 +27,18 @@ def test_decentralized_vi_adom():
     chi = 1 / lam
     omega = 1 / 16
     theta = 1 / 2
-    gamma = min(mu / (16 * (L ** 2)), np.inf)  # , b * omega / (24 * (L_avg ** 2) * eta_z)
+    gamma = min(
+        mu / (16 * (L**2)), np.inf
+    )  # , b * omega / (24 * (L_avg ** 2) * eta_z)
     beta = 5 * gamma
     nu = mu / 4
     alpha = 1 / 2
     tau = min(mu / (32 * L * chi), mu * np.sqrt(b * omega) / (32 * L_avg))
-    eta_x = min(1 / (900 * chi * gamma), nu / (36 * tau * (chi ** 2)))
+    eta_x = min(1 / (900 * chi * gamma), nu / (36 * tau * (chi**2)))
     eta_y = min(1 / (4 * gamma), nu / (8 * tau))
-    eta_z = min(1 / (8 * L * chi), 1 / (32 * eta_y), np.sqrt(alpha * b * omega) / (8 * L_avg))
+    eta_z = min(
+        1 / (8 * L * chi), 1 / (32 * eta_y), np.sqrt(alpha * b * omega) / (8 * L_avg)
+    )
     logger = LoggerDecentralized(
         default_config_path="../tests/test_utils/config_decentralized.yaml",
         z_true=ArrayPair(np.zeros(d), np.zeros(d)),

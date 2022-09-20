@@ -118,7 +118,9 @@ def run_parameter_search(
             mix_mat = metropolis_weights(adj_mat[topology])
             W = gos_mat[topology]
 
-            path = os.path.join(logs_path, experiment_type, topology, f"{num_nodes}_{dataset_name}")
+            path = os.path.join(
+                logs_path, experiment_type, topology, f"{num_nodes}_{dataset_name}"
+            )
             with open(os.path.join(path, "z_true"), "rb") as f:
                 z_true = pickle.load(f)
 
@@ -135,11 +137,13 @@ def run_parameter_search(
                 methods_names_PS = []
                 labels_PS = []
 
-                for stepsize_factor in tqdm(stepsize_factors, desc="Stepsize factors..."):
+                for stepsize_factor in tqdm(
+                    stepsize_factors, desc="Stepsize factors..."
+                ):
                     print(f"Stepsize factor: {stepsize_factor}")
                     methods_PS.append(runner(stepsize_factor))
-                    methods_names_PS.append(method + f"_{stepsize_factor}.pkl")
-                    labels_PS.append(label + f" {stepsize_factor}")
+                    methods_names_PS.append(f"{method}_{stepsize_factor}.pkl")
+                    labels_PS.append(f"{label} {stepsize_factor}")
 
                 preplot_algorithms(
                     topology=topology,

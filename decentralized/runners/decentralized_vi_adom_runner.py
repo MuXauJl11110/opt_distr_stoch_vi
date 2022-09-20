@@ -12,7 +12,6 @@ class DecentralizedVIADOMRunner(object):
         self,
         oracles: List[BaseSmoothSaddleOracle],
         b: int,
-        n: int,
         L: float,
         L_avg: float,
         mu: float,
@@ -23,7 +22,6 @@ class DecentralizedVIADOMRunner(object):
     ):
         self.oracles = oracles
         self.b = b
-        self.n = n
         self.L = L
         self.L_avg = L_avg
         self.mu = mu
@@ -38,23 +36,32 @@ class DecentralizedVIADOMRunner(object):
         self.p = 1 / 16
         self.omega = self.p
         self.theta = 1 / 2
-        self.gamma = np.min(
-            self.mu / (16 * (self.L ** 2))  # , self.b * self.omega / (24 * (self.L_avg ** 2) * self.eta_z)
+        self.gamma = min(
+            self.mu / (16 * (self.L**2)),
+            np.inf,  # , self.b * self.omega / (24 * (self.L_avg ** 2) * self.eta_z)
         )
         self.beta = 5 * self.gamma
         self.nu = self.mu / 4
         self.alpha = 1 / 2
-        self.tau = np.min(self.mu / (32 * self.L * self.chi), self.mu * np.sqrt(self.b * self.p) / (32 * self.L_avg))
-        self.eta_x = np.min(1 / (900 * self.chi * self.gamma), self.nu / (36 * self.tau * (self.chi ** 2)))
-        self.eta_y = np.min(1 / (4 * self.gamma), self.nu / (8 * self.tau))
-        self.eta_z = np.min(
+        self.tau = min(
+            self.mu / (32 * self.L * self.chi),
+            self.mu * np.sqrt(self.b * self.p) / (32 * self.L_avg),
+        )
+        self.eta_x = min(
+            1 / (900 * self.chi * self.gamma),
+            self.nu / (36 * self.tau * (self.chi**2)),
+        )
+        self.eta_y = min(1 / (4 * self.gamma), self.nu / (8 * self.tau))
+        self.eta_z = min(
             1 / (8 * self.L * self.chi),
             1 / (32 * self.eta_y),
             np.sqrt(self.alpha * self.b * self.omega) / (8 * self.L_avg),
         )
         self._params_computed = True
 
-    def create_method(self, x_0: List[ArrayPair], y_0: List[ArrayPair], w_0: List[ArrayPair]):
+    def create_method(
+        self, x_0: List[ArrayPair], y_0: List[ArrayPair], z_0: List[ArrayPair]
+    ):
         if self._params_computed == False:
             raise ValueError("Call compute_method_params first")
 
@@ -62,7 +69,7 @@ class DecentralizedVIADOMRunner(object):
             oracles=self.oracles,
             x_0=x_0,
             y_0=y_0,
-            w_0=w_0,
+            z_0=z_0,
             eta_x=self.eta_x,
             eta_y=self.eta_y,
             eta_z=self.eta_z,
@@ -73,10 +80,7 @@ class DecentralizedVIADOMRunner(object):
             tau=self.tau,
             nu=self.nu,
             beta=self.beta,
-            b=self.b,
-            p=self.p,
             gos_mat=self.gos_mat,
-            n=self.n,
             logger=self.logger,
             constraints=self.constraints,
         )

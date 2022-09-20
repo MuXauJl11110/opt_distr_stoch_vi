@@ -71,7 +71,9 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         if len(x_0) != len(y_0) != len(z_0):
             raise ValueError("Number of x^0, y^0 and w^0 should be equal!")
         self._num_nodes = len(oracles)  # M
-        oracle_sum = LinearCombSaddleOracle(oracles, [1 / self._num_nodes] * self._num_nodes)
+        oracle_sum = LinearCombSaddleOracle(
+            oracles, [1 / self._num_nodes] * self._num_nodes
+        )
         super().__init__(oracle_sum, z_0[0], None, None, logger)
         self.oracle_list = oracles
 
@@ -122,10 +124,19 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         self.grad_list_z_old = self.oracle_grad_list(self.z_list_old)
 
         delta = (1 + self.alpha) * self.grad_list_z - self.alpha * self.grad_list_z_old
-        Delta_z = delta - self.nu * self.z_list - self.y_list - self.alpha * (self.y_list - self.y_list_old)
+        Delta_z = (
+            delta
+            - self.nu * self.z_list
+            - self.y_list
+            - self.alpha * (self.y_list - self.y_list_old)
+        )
 
         self.z_list_old = self.z_list.copy()
-        self.z_list = (1 - self.omega) * self.z_list + self.omega * self.z_list - self.eta_z * Delta_z
+        self.z_list = (
+            (1 - self.omega) * self.z_list
+            + self.omega * self.z_list
+            - self.eta_z * Delta_z
+        )
         self.constraints.apply_per_row(self.z_list)
 
         y_list_c = self.tau * self.y_list + (1 - self.tau) * self.y_list_f
@@ -141,7 +152,9 @@ class DecentralizedVIADOM(BaseSaddleMethod):
 
         delta_half = self.grad_list_z
 
-        Delta_x = (y_list_c + x_list_c) / self.nu + self.beta * (self.x_list + delta_half)
+        Delta_x = (y_list_c + x_list_c) / self.nu + self.beta * (
+            self.x_list + delta_half
+        )
         x_mixed = ArrayPair(
             self.gos_mat @ (self.eta_x * Delta_x.x + self.m_list.x),
             self.gos_mat @ (self.eta_x * Delta_x.y + self.m_list.y),
@@ -172,9 +185,6 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         ----------
         z: ArrayPair
             Point at which the gradients are computed.
-
-        batch: np.ndarray
-            Precomputed batches for the each computational node.
 
         Returns
         -------

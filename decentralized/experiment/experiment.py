@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from decentralized.experiment.decentralized_extragradient_con import run_extragrad_con
 from decentralized.experiment.decentralized_extragradient_gt import run_extragrad_gt
+from decentralized.experiment.decentralized_vi_adom import run_vi_adom
 from decentralized.experiment.decentralized_vi_papc import run_vi_papc
 from decentralized.experiment.plotting import plot_algorithms, preplot_algorithms
 from decentralized.experiment.saddle_sliding import run_sliding
@@ -87,14 +88,34 @@ def run_experiment(
         r_y=r_y,
         comm_budget_experiment=comm_budget_experiment,
     )
+    vi_adom_runner = lambda: run_vi_adom(
+        num_nodes=num_nodes,
+        oracles=oracles,
+        b=batch_size,
+        L=L,
+        L_avg=L_avg,
+        mu=mu,
+        x_0=x_0,
+        y_0=y_0,
+        z_0=z_0,
+        z_true=z_true,
+        g_true=g_true,
+        gos_mat=W,
+        r_x=r_x,
+        r_y=r_y,
+        comm_budget_experiment=comm_budget_experiment,
+    )
     method_to_runner = {
         "extragrad": extragrad_gt_runner,
         "extragrad_con": extragrad_con_runner,
         "sliding": sliding_runner,
-        "vi_papc": vi_papc_runner,
+        # "vi_papc": vi_papc_runner,
+        "vi_adom": vi_adom_runner,
     }
     for dataset_name in tqdm(datasets, desc="Datasets..."):
         A, b = get_A_b(dataset_name)
+        x_0 = ArrayPair.zeros(A.shape[1])
+        y_0 = ArrayPair.zeros(A.shape[1])
         z_0 = ArrayPair.zeros(A.shape[1])
         oracles, oracle_mean, L, delta, mu, A_grad, b_grad = get_oracles(
             A,
@@ -105,6 +126,8 @@ def run_experiment(
             r_x,
             r_y,
         )
+        L_avg = L
+        batch_size = 1
         # For exact solution uncomment next lines
         # x = np.linalg.solve(A_grad, b_grad)
         # z_true = ArrayPair(x, np.zeros(A.shape[1]))
@@ -140,7 +163,7 @@ def run_experiment(
 
                 runner = method_to_runner[method]
                 methods_exp.append(runner())
-                method_names_exp.append(method)
+                method_names_exp.append(f"{method}.pkl")
                 labels_exp.append(label)
 
             preplot_algorithms(
@@ -170,7 +193,7 @@ def run_experiment(
                 labels=labels,
                 method_names=method_names_exp,
                 comm_budget_experiment=comm_budget_experiment,
-                save_to=f"{num_nodes}_{dataset_name}",
+                save_to=f"{num_nodes}_{dataset_name}_alg2",
             )
 
             methods_exp.clear()

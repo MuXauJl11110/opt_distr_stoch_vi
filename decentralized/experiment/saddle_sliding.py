@@ -2,7 +2,7 @@ from typing import List, Optional
 
 import numpy as np
 from decentralized.loggers.logger import LoggerDecentralized
-from decentralized.oracles.base import ArrayPair
+from decentralized.oracles.base import ArrayPair, BaseSmoothSaddleOracle
 from decentralized.runners.decentralized_sliding_runner import (
     DecentralizedSaddleSlidingRunner,
     sliding_comm_per_iter,
@@ -10,7 +10,7 @@ from decentralized.runners.decentralized_sliding_runner import (
 
 
 def run_sliding(
-    oracles: List[ArrayPair],
+    oracles: List[BaseSmoothSaddleOracle],
     L: float,
     delta: float,
     mu: float,
@@ -39,7 +39,9 @@ def run_sliding(
 
     if stepsize_factor is not None:
         sliding_runner.gamma *= stepsize_factor
-        print(f"Running decentralized sliding with stepsize_factor: {stepsize_factor}...")
+        print(
+            f"Running decentralized sliding with stepsize_factor: {stepsize_factor}..."
+        )
     else:
         print("Running decentralized sliding...")
 
@@ -53,6 +55,8 @@ def run_sliding(
         )
     )
     sliding_runner.logger.comm_per_iter = sliding_comm_per_iter(sliding_runner.method)
-    sliding_runner.run(max_iter=comm_budget_experiment // sliding_runner.logger.comm_per_iter)
+    sliding_runner.run(
+        max_iter=comm_budget_experiment // sliding_runner.logger.comm_per_iter
+    )
 
     return sliding_runner

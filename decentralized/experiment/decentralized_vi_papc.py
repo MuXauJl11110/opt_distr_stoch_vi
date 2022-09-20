@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import numpy as np
 from decentralized.loggers.logger import LoggerDecentralized
-from decentralized.oracles.base import ArrayPair
+from decentralized.oracles.base import ArrayPair, BaseSmoothSaddleOracle
 from decentralized.runners.decentralized_vi_papc_runner import DecentralizedVIPAPCRunner
 
 
@@ -24,7 +24,7 @@ def generate_y_list(num_nodes: int, z_0: ArrayPair):
 
 def run_vi_papc(
     num_nodes: int,
-    oracles: List[ArrayPair],
+    oracles: List[BaseSmoothSaddleOracle],
     L: float,
     mu: float,
     z_0: ArrayPair,
@@ -56,12 +56,16 @@ def run_vi_papc(
 
     if stepsize_factor is not None:
         vi_papc_runner.eta *= stepsize_factor
-        print(f"Running decentralized VI PAPC with stepsize_factor: {stepsize_factor}...")
+        print(
+            f"Running decentralized VI PAPC with stepsize_factor: {stepsize_factor}..."
+        )
     else:
         print("Running decentralized VI PAPC...")
 
     vi_papc_runner.create_method(z_0_list, y_0_list)
     vi_papc_runner.logger.comm_per_iter = 1
-    vi_papc_runner.run(max_iter=comm_budget_experiment // vi_papc_runner.logger.comm_per_iter)
+    vi_papc_runner.run(
+        max_iter=comm_budget_experiment // vi_papc_runner.logger.comm_per_iter
+    )
 
     return vi_papc_runner
