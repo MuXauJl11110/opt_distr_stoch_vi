@@ -74,6 +74,8 @@ def extragradient_solver(
     Solve the problem with standard Extragradient method up to a desired accuracy.
     """
 
-    method = Extragradient(oracle, stepsize, z_0, tolerance, stopping_criteria, logger, constraints)
+    method = Extragradient(
+        oracle, stepsize, z_0, tolerance, stopping_criteria, logger, constraints
+    )
     method.run(max_iter=num_iter)
     return method.z

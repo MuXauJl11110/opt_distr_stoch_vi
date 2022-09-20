@@ -2,6 +2,7 @@ from typing import List, Optional
 
 import numpy as np
 from decentralized.loggers.logger import LoggerDecentralized
+from decentralized.network.network import Network
 from decentralized.oracles.base import ArrayPair, BaseSmoothSaddleOracle
 from decentralized.runners.decentralized_extragradient_runner import (
     DecentralizedExtragradientGTRunner,
@@ -15,7 +16,7 @@ def run_extragrad_gt(
     z_0: ArrayPair,
     z_true: ArrayPair,
     g_true: ArrayPair,
-    mix_mat: np.ndarray,
+    network: Network,
     r_x: float,
     r_y: float,
     comm_budget_experiment: int,
@@ -26,10 +27,9 @@ def run_extragrad_gt(
         L=L,
         mu=mu,
         gamma=mu,
-        mix_mat=mix_mat,
+        network=network,
         r_x=r_x,
         r_y=r_y,
-        logger=LoggerDecentralized(z_true=z_true, g_true=g_true),
     )
     extragrad_runner.compute_method_params()
 
@@ -41,10 +41,11 @@ def run_extragrad_gt(
     else:
         print("Running decentralized extragradient...")
 
-    extragrad_runner.create_method(z_0)
-    extragrad_runner.logger.comm_per_iter = 2
-    extragrad_runner.run(
-        max_iter=comm_budget_experiment // extragrad_runner.logger.comm_per_iter
+    extragrad_runner.create_method(
+        z_0,
+        logger=LoggerDecentralized(z_true=z_true, g_true=g_true),
     )
+    extragrad_runner.method.logger.comm_per_iter = 2
+    extragrad_runner.run(max_iter=comm_budget_experiment)
 
     return extragrad_runner

@@ -50,21 +50,20 @@ class BaseSaddleMethod(object):
         elif stopping_criteria == None:
             self.stopping_criteria = self.stopping_criteria_none
         else:
-            raise ValueError('Unknown stopping criteria type: "{}"'.format(stopping_criteria))
+            raise ValueError(
+                'Unknown stopping criteria type: "{}"'.format(stopping_criteria)
+            )
 
     def run(self, max_iter: int, max_time: float = None):
         """
-        Run the method for no more than max_iter iterations and max_time seconds.
-
+        Run the method for no more that max_iter iterations and max_time seconds.
         Parameters
         ----------
         max_iter: int
             Maximum number of iterations.
-
         max_time: float
             Maximum time (in seconds).
         """
-        self.grad_norm_0 = self.z.norm()
         if self.logger is not None:
             self.logger.start(self)
         if max_time is None:
@@ -77,9 +76,10 @@ class BaseSaddleMethod(object):
             if self.time > max_time:
                 break
             self._update_time()
-            self.step()
-            if self.logger is not None:
-                self.logger.step(self)
+            try:
+                self.step()
+            except StopIteration:
+                break
             if self.stopping_criteria():
                 break
 
@@ -96,7 +96,7 @@ class BaseSaddleMethod(object):
         raise NotImplementedError("step() not implemented!")
 
     def stopping_criteria_grad_relative(self):
-        return self.grad.dot(self.grad) <= self.tolerance * self.grad_norm_0 ** 2
+        return self.grad.dot(self.grad) <= self.tolerance * self.grad_norm_0**2
 
     def stopping_criteria_grad_absolute(self):
         return self.grad.dot(self.grad) <= self.tolerance

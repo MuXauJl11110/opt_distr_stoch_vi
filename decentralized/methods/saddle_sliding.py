@@ -5,6 +5,7 @@ from decentralized.loggers.logger import Logger
 from decentralized.methods.base import BaseSaddleMethod
 from decentralized.methods.constraints import ConstraintsL2
 from decentralized.methods.extragradient import extragradient_solver
+from decentralized.network.network import Network
 from decentralized.oracles.base import (
     ArrayPair,
     BaseSmoothSaddleOracle,
@@ -106,12 +107,20 @@ class SaddleSliding(BaseSaddleMethod):
     def step(self):
         v = self.z - self.oracle_g.grad(self.z) * self.stepsize_outer
         u = self.solve_subproblem(v)
-        self.z = u + self.stepsize_outer * (self.oracle_g.grad(self.z) - self.oracle_g.grad(u))
+        self.z = u + self.stepsize_outer * (
+            self.oracle_g.grad(self.z) - self.oracle_g.grad(u)
+        )
 
     def solve_subproblem(self, v: ArrayPair) -> ArrayPair:
-        suboracle = SaddlePointOracleRegularizer(self.oracle_phi, self.stepsize_outer, v)
+        suboracle = SaddlePointOracleRegularizer(
+            self.oracle_phi, self.stepsize_outer, v
+        )
         return self.inner_solver(
-            suboracle, self.stepsize_inner, v, num_iter=self.inner_iterations, constraints=self.constraints
+            suboracle,
+            self.stepsize_inner,
+            v,
+            num_iter=self.inner_iterations,
+            constraints=self.constraints,
         )
 
 
@@ -143,8 +152,8 @@ class DecentralizedSaddleSliding(BaseSaddleMethod):
     con_iters_pt: int
         Number of consensus iterations for mixing the points.
 
-    mix_mat: np.ndarray
-        Mixing matrix
+    network: Network
+        Network consisting of mixing matrices.
 
     gossip_step: float
         Stepsize for consensus subroutine.
@@ -167,14 +176,16 @@ class DecentralizedSaddleSliding(BaseSaddleMethod):
         inner_iterations: int,
         con_iters_grad: int,
         con_iters_pt: int,
-        mix_mat: np.ndarray,
+        network: Network,
         gossip_step: float,
         z_0: ArrayPair,
         logger=Optional[Logger],
         constraints: Optional[ConstraintsL2] = None,
     ):
         self._num_nodes = len(oracles)
-        oracle_sum = LinearCombSaddleOracle(oracles, [1 / self._num_nodes] * self._num_nodes)
+        oracle_sum = LinearCombSaddleOracle(
+            oracles, [1 / self._num_nodes] * self._num_nodes
+        )
         super().__init__(oracle_sum, z_0, None, None, logger)
         self.oracle_list = oracles
         self.stepsize_outer = stepsize_outer
@@ -182,12 +193,16 @@ class DecentralizedSaddleSliding(BaseSaddleMethod):
         self.inner_iterations = inner_iterations
         self.con_iters_grad = con_iters_grad
         self.con_iters_pt = con_iters_pt
-        self.mix_mat = mix_mat
+        self.network = network
         self.gossip_step = gossip_step
         self.constraints = constraints
         self.z_list = ArrayPair(
-            np.tile(z_0.x.copy(), self._num_nodes).reshape(self._num_nodes, z_0.x.shape[0]),
-            np.tile(z_0.y.copy(), self._num_nodes).reshape(self._num_nodes, z_0.y.shape[0]),
+            np.tile(z_0.x.copy(), self._num_nodes).reshape(
+                self._num_nodes, z_0.x.shape[0]
+            ),
+            np.tile(z_0.y.copy(), self._num_nodes).reshape(
+                self._num_nodes, z_0.y.shape[0]
+            ),
         )
         self.grad_list_z = self.oracle_grad_list(self.z_list)
 
@@ -202,7 +217,8 @@ class DecentralizedSaddleSliding(BaseSaddleMethod):
         u = self.solve_subproblem(m, v)
 
         u_list = ArrayPair(
-            np.zeros((self._num_nodes, self.z.x.shape[0])), np.zeros((self._num_nodes, self.z.y.shape[0]))
+            np.zeros((self._num_nodes, self.z.x.shape[0])),
+            np.zeros((self._num_nodes, self.z.y.shape[0])),
         )
         u_list.x[m] = u.x
         u_list.y[m] = u.y
@@ -210,9 +226,12 @@ class DecentralizedSaddleSliding(BaseSaddleMethod):
 
         grad_av_u = self.acc_gossip(self.oracle_grad_list(u_list), self.con_iters_grad)
         grad_av_u_m = ArrayPair(grad_av_u.x[m], grad_av_u.y[m])
-        z = u + self.stepsize_outer * (grad_av_z_m - grad_z_m - grad_av_u_m + self.oracle_list[m].grad(u))
+        z = u + self.stepsize_outer * (
+            grad_av_z_m - grad_z_m - grad_av_u_m + self.oracle_list[m].grad(u)
+        )
         z_list = ArrayPair(
-            np.zeros((self._num_nodes, self.z.x.shape[0])), np.zeros((self._num_nodes, self.z.y.shape[0]))
+            np.zeros((self._num_nodes, self.z.x.shape[0])),
+            np.zeros((self._num_nodes, self.z.y.shape[0])),
         )
         z_list.x[m] = z.x
         z_list.y[m] = z.y
@@ -229,9 +248,15 @@ class DecentralizedSaddleSliding(BaseSaddleMethod):
         self.z = ArrayPair(self.z_list.x.mean(axis=0), self.z_list.y.mean(axis=0))
 
     def solve_subproblem(self, m: int, v: ArrayPair):
-        suboracle = SaddlePointOracleRegularizer(self.oracle_list[m], self.stepsize_outer, v)
+        suboracle = SaddlePointOracleRegularizer(
+            self.oracle_list[m], self.stepsize_outer, v
+        )
         return extragradient_solver(
-            suboracle, self.stepsize_inner, v, num_iter=self.inner_iterations, constraints=self.constraints
+            suboracle,
+            self.stepsize_inner,
+            v,
+            num_iter=self.inner_iterations,
+            constraints=self.constraints,
         )
 
     def oracle_grad_list(self, z: ArrayPair):
@@ -245,10 +270,18 @@ class DecentralizedSaddleSliding(BaseSaddleMethod):
     def acc_gossip(self, z: ArrayPair, n_iters: int):
         z = z.copy()
         z_old = z.copy()
+        self.mix_mat = self.network.__next__()[0]
+        if self.logger is not None:
+            self.logger.step(self)
+
         for _ in range(n_iters):
             z_new = ArrayPair(np.empty_like(z.x), np.empty_like(z.y))
-            z_new.x = (1 + self.gossip_step) * self.mix_mat.dot(z.x) - self.gossip_step * z_old.x
-            z_new.y = (1 + self.gossip_step) * self.mix_mat.dot(z.y) - self.gossip_step * z_old.y
+            z_new.x = (1 + self.gossip_step) * self.mix_mat.dot(
+                z.x
+            ) - self.gossip_step * z_old.x
+            z_new.y = (1 + self.gossip_step) * self.mix_mat.dot(
+                z.y
+            ) - self.gossip_step * z_old.y
             z_old = z.copy()
             z = z_new.copy()
         return z

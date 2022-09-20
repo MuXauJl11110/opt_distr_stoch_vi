@@ -4,6 +4,7 @@ import numpy as np
 from decentralized.loggers.logger import Logger
 from decentralized.methods.base import BaseSaddleMethod
 from decentralized.methods.constraints import ConstraintsL2
+from decentralized.network.network import Network
 from decentralized.oracles.base import (
     ArrayPair,
     BaseSmoothSaddleOracle,
@@ -32,11 +33,14 @@ class DecentralizedVIPAPC(BaseSaddleMethod):
     alpha, beta: float
         Momentums.
 
-    gos_mat: np.ndarray
-        Gossip matrix.
+    network: Network
+        Network consisting of gossip matrices.
 
     logger: Optional[Logger]
         Stores the history of the method during its iterations.
+
+    constraints: Optional[ConstraintsL2]
+        L2 constraints on problem variables.
     """
 
     def __init__(
@@ -48,14 +52,16 @@ class DecentralizedVIPAPC(BaseSaddleMethod):
         theta: float,
         alpha: float,
         beta: float,
-        gos_mat: np.ndarray,
+        network: Network,
         logger=Optional[Logger],
         constraints: Optional[ConstraintsL2] = None,
     ):
         if len(z_0) != len(y_0):
             raise ValueError("Number of x^0 and y^0 should be equal!")
         self._num_nodes = len(oracles)  # M
-        oracle_sum = LinearCombSaddleOracle(oracles, [1 / self._num_nodes] * self._num_nodes)
+        oracle_sum = LinearCombSaddleOracle(
+            oracles, [1 / self._num_nodes] * self._num_nodes
+        )
         super().__init__(oracle_sum, z_0[0], None, None, logger)
         self.oracle_list = oracles
 
@@ -64,7 +70,7 @@ class DecentralizedVIPAPC(BaseSaddleMethod):
         self.alpha = alpha
         self.beta = beta
 
-        self.gos_mat = gos_mat
+        self.network = network
 
         if constraints is not None:
             self.constraints = constraints
@@ -142,8 +148,16 @@ class DecentralizedVIPAPC(BaseSaddleMethod):
         z_mixed: ArrayPair
             Values at nodes after gossip step.
         """
+        self.gos_mat = self.network.__next__()[0]
+        if self.logger is not None:
+            self.logger.step(self)
+
         z_mixed = ArrayPair(
-            y.x - self.theta * (self.gos_mat @ (z.x - self.beta * (self.oracle_grad_list(z).x - y.x))),
-            y.y - self.theta * (self.gos_mat @ (z.y - self.beta * (self.oracle_grad_list(z).y - y.y))),
+            y.x
+            - self.theta
+            * (self.gos_mat @ (z.x - self.beta * (self.oracle_grad_list(z).x - y.x))),
+            y.y
+            - self.theta
+            * (self.gos_mat @ (z.y - self.beta * (self.oracle_grad_list(z).y - y.y))),
         )
         return z_mixed

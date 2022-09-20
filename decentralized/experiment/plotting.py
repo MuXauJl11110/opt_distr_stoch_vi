@@ -14,7 +14,7 @@ def preplot_algorithms(
     num_nodes: int,
     data: str,
     labels: List[str],
-    methods: List[object],
+    runners: List[object],
     dist_to_opt_type: Optional[str] = "argument",
     save_to=None,
 ):
@@ -25,21 +25,15 @@ def preplot_algorithms(
 
     plt.subplot(121)
     ax = plt.gca()
-    for method, label in zip(methods, labels):
+    for runner, label in zip(runners, labels):
         if dist_to_opt_type == "argument":
-            dist_to_opt = method.logger.argument_primal_distance_to_opt
+            dist_to_opt = runner.method.logger.argument_primal_distance_to_opt
         elif dist_to_opt_type == "gradient":
-            dist_to_opt = method.logger.gradient_primal_distance_to_opt
+            dist_to_opt = runner.method.logger.gradient_primal_distance_to_opt
         else:
             raise ValueError(f"Unknown distance to optimum type: {dist_to_opt_type}!")
-        comm_steps = np.arange(
-            0,
-            method.logger.comm_per_iter * len(dist_to_opt),
-            method.logger.comm_per_iter,
-        )
         color = next(ax._get_lines.prop_cycler)["color"]
         plt.plot(
-            comm_steps,
             dist_to_opt,
             label=label,
             marker=next(marker),
@@ -64,16 +58,10 @@ def preplot_algorithms(
 
     plt.subplot(122)
     ax = plt.gca()
-    for method, label in zip(methods, labels):
-        dist_to_con = method.logger.argument_primal_distance_to_consensus
-        comm_steps = np.arange(
-            0,
-            method.logger.comm_per_iter * len(dist_to_con),
-            method.logger.comm_per_iter,
-        )
+    for runner, label in zip(runners, labels):
+        dist_to_con = runner.method.logger.argument_primal_distance_to_consensus
         color = next(ax._get_lines.prop_cycler)["color"]
         plt.plot(
-            comm_steps,
             dist_to_con,
             label=label,
             marker=next(marker),
@@ -116,7 +104,10 @@ def plot_algorithms(
 ):
     def saddle_grad_norm(a: ArrayPair, b: ArrayPair, **kwargs):
         x, y = (a - b).tuple()
-        return LA.norm(x.sum(axis=0) / x.shape[0]) ** 2 + LA.norm(y.sum(axis=0) / y.shape[0]) ** 2
+        return (
+            LA.norm(x.sum(axis=0) / x.shape[0]) ** 2
+            + LA.norm(y.sum(axis=0) / y.shape[0]) ** 2
+        )
 
     for type_ in dist_types:
         plt.figure(figsize=(12, 6))
@@ -136,7 +127,9 @@ def plot_algorithms(
         else:
             raise ValueError(f"Unknown distance to optimum type: {type_}!")
         for method_name, label in zip(method_names, labels):
-            path = os.path.join(logs_path, experiment_type, topology, f"{num_nodes}_{data}")
+            path = os.path.join(
+                logs_path, experiment_type, topology, f"{num_nodes}_{data}"
+            )
             os.system(f"mkdir -p {os.path.join(path, type_)}")
             with open(os.path.join(path, type_, f"{method_name}.pkl"), "rb") as f:
                 dist = pickle.load(f)
@@ -176,7 +169,9 @@ def plot_algorithms(
 
         if save_to is not None:
             if save_folder is not None:
-                path = os.path.join(plots_path, experiment_type, type_, topology, save_folder)
+                path = os.path.join(
+                    plots_path, experiment_type, type_, topology, save_folder
+                )
             else:
                 path = os.path.join(plots_path, experiment_type, type_, topology)
             os.system(f"mkdir -p {path}")

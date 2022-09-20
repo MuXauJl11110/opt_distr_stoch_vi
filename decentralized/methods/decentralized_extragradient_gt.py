@@ -4,6 +4,7 @@ import numpy as np
 from decentralized.loggers.logger import Logger
 from decentralized.methods.base import BaseSaddleMethod
 from decentralized.methods.constraints import ConstraintsL2
+from decentralized.network.network import Network
 from decentralized.oracles.base import (
     ArrayPair,
     BaseSmoothSaddleOracle,
@@ -24,8 +25,8 @@ class DecentralizedExtragradientGT(BaseSaddleMethod):
     stepsize: float
         Stepsize of Extragradient method.
 
-    mix_mat: np.ndarray
-        Mixing matrix.
+    network: Network
+        Network consisting of mixing matrices.
 
     z_0: ArrayPair
         Initial guess (similar at each node).
@@ -41,32 +42,45 @@ class DecentralizedExtragradientGT(BaseSaddleMethod):
         self,
         oracles: List[BaseSmoothSaddleOracle],
         stepsize: float,
-        mix_mat: np.ndarray,
+        network: Network,
         z_0: ArrayPair,
         logger=Optional[Logger],
         constraints: Optional[ConstraintsL2] = None,
     ):
         self._num_nodes = len(oracles)
-        oracle_sum = LinearCombSaddleOracle(oracles, [1 / self._num_nodes] * self._num_nodes)
+        oracle_sum = LinearCombSaddleOracle(
+            oracles, [1 / self._num_nodes] * self._num_nodes
+        )
         super().__init__(oracle_sum, z_0, None, None, logger)
         self.oracle_list = oracles
         self.stepsize = stepsize
-        self.mix_mat = mix_mat
+        self.network = network
         self.constraints = constraints
         self.z_list = ArrayPair(
-            np.tile(z_0.x.copy(), self._num_nodes).reshape(self._num_nodes, z_0.x.shape[0]),
-            np.tile(z_0.y.copy(), self._num_nodes).reshape(self._num_nodes, z_0.y.shape[0]),
+            np.tile(z_0.x.copy(), self._num_nodes).reshape(
+                self._num_nodes, z_0.x.shape[0]
+            ),
+            np.tile(z_0.y.copy(), self._num_nodes).reshape(
+                self._num_nodes, z_0.y.shape[0]
+            ),
         )
         self.s_list = None
+        self.grad_list_z = self.oracle_grad_list(self.z_list)
 
     def step(self):
         if self.s_list is None:
             self.s_list = self.oracle_grad_list(self.z_list)
         z_half = self.z_list - self.stepsize * self.s_list
-        s_half = self.s_list + self.oracle_grad_list(z_half) - self.oracle_grad_list(self.z_list)
+        s_half = (
+            self.s_list
+            + self.oracle_grad_list(z_half)
+            - self.oracle_grad_list(self.z_list)
+        )
         z_new = self.mul_by_mix_mat(self.z_list) - self.stepsize * s_half
         self.s_list = (
-            self.mul_by_mix_mat(self.s_list) + self.oracle_grad_list(z_new) - self.oracle_grad_list(self.z_list)
+            self.mul_by_mix_mat(self.s_list)
+            + self.oracle_grad_list(z_new)
+            - self.oracle_grad_list(self.z_list)
         )
         self.z_list = z_new
 
@@ -82,4 +96,8 @@ class DecentralizedExtragradientGT(BaseSaddleMethod):
         return res
 
     def mul_by_mix_mat(self, z: ArrayPair):
+        self.mix_mat = self.network.__next__()[0]
+        if self.logger is not None:
+            self.logger.step(self)
+
         return ArrayPair(self.mix_mat.dot(z.x), self.mix_mat.dot(z.y))

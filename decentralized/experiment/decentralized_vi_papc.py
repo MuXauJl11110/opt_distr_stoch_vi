@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import numpy as np
 from decentralized.loggers.logger import LoggerDecentralized
+from decentralized.network.network import Network
 from decentralized.oracles.base import ArrayPair, BaseSmoothSaddleOracle
 from decentralized.runners.decentralized_vi_papc_runner import DecentralizedVIPAPCRunner
 
@@ -30,7 +31,7 @@ def run_vi_papc(
     z_0: ArrayPair,
     z_true: ArrayPair,
     g_true: ArrayPair,
-    gos_mat: np.ndarray,
+    network: Network,
     r_x: float,
     r_y: float,
     comm_budget_experiment: int,
@@ -41,10 +42,9 @@ def run_vi_papc(
         oracles=oracles,
         L=L,
         mu=mu,
-        gos_mat=gos_mat,
+        network=network,
         r_x=r_x,
         r_y=r_y,
-        logger=LoggerDecentralized(z_true=z_true, g_true=g_true),
     )
     z_0_list = [z_0] * num_nodes
     if random_y_0:
@@ -62,10 +62,12 @@ def run_vi_papc(
     else:
         print("Running decentralized VI PAPC...")
 
-    vi_papc_runner.create_method(z_0_list, y_0_list)
-    vi_papc_runner.logger.comm_per_iter = 1
-    vi_papc_runner.run(
-        max_iter=comm_budget_experiment // vi_papc_runner.logger.comm_per_iter
+    vi_papc_runner.create_method(
+        z_0_list,
+        y_0_list,
+        logger=LoggerDecentralized(z_true=z_true, g_true=g_true),
     )
+    vi_papc_runner.method.logger.comm_per_iter = 1
+    vi_papc_runner.run(max_iter=comm_budget_experiment)
 
     return vi_papc_runner

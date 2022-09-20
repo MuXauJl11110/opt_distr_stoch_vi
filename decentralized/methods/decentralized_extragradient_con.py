@@ -4,6 +4,7 @@ import numpy as np
 from decentralized.loggers.logger import Logger
 from decentralized.methods.base import BaseSaddleMethod
 from decentralized.methods.constraints import ConstraintsL2
+from decentralized.network.network import Network
 from decentralized.oracles.base import (
     ArrayPair,
     BaseSmoothSaddleOracle,
@@ -27,8 +28,8 @@ class DecentralizedExtragradientCon(BaseSaddleMethod):
     con_iters: int
         Number of iterations in consensus subroutine.
 
-    mix_mat: np.ndarray
-        Mixing matrix.
+    network: Network
+        Network consisting of mixing matrices.
 
     gossip_step: float
         Step-size in consensus subroutine algorithm.
@@ -48,27 +49,33 @@ class DecentralizedExtragradientCon(BaseSaddleMethod):
         oracles: List[BaseSmoothSaddleOracle],
         stepsize: float,
         con_iters: int,
-        mix_mat: np.ndarray,
+        network: Network,
         gossip_step: float,
         z_0: ArrayPair,
         logger=Optional[Logger],
         constraints: Optional[ConstraintsL2] = None,
     ):
         self._num_nodes = len(oracles)
-        oracle_sum = LinearCombSaddleOracle(oracles, [1 / self._num_nodes] * self._num_nodes)
+        oracle_sum = LinearCombSaddleOracle(
+            oracles, [1 / self._num_nodes] * self._num_nodes
+        )
         super().__init__(oracle_sum, z_0, None, None, logger)
         self.oracle_list = oracles
         self.stepsize = stepsize
         self.con_iters = con_iters
-        self.mix_mat = mix_mat
+        self.network = network
         self.gossip_step = gossip_step
         if constraints is not None:
             self.constraints = constraints
         else:
             self.constraints = ConstraintsL2(+np.inf, +np.inf)
         self.z_list = ArrayPair(
-            np.tile(z_0.x.copy(), self._num_nodes).reshape(self._num_nodes, z_0.x.shape[0]),
-            np.tile(z_0.y.copy(), self._num_nodes).reshape(self._num_nodes, z_0.y.shape[0]),
+            np.tile(z_0.x.copy(), self._num_nodes).reshape(
+                self._num_nodes, z_0.x.shape[0]
+            ),
+            np.tile(z_0.y.copy(), self._num_nodes).reshape(
+                self._num_nodes, z_0.y.shape[0]
+            ),
         )
 
     def step(self):
@@ -119,12 +126,20 @@ class DecentralizedExtragradientCon(BaseSaddleMethod):
         z_mixed: ArrayPair
             Values at nodes after consensus subroutine.
         """
+        self.mix_mat = self.network.__next__()[0]
+        if self.logger is not None:
+            self.logger.step(self)
+
         z = z.copy()
         z_old = z.copy()
         for _ in range(n_iters):
             z_new = ArrayPair(np.empty_like(z.x), np.empty_like(z.y))
-            z_new.x = (1 + self.gossip_step) * self.mix_mat.dot(z.x) - self.gossip_step * z_old.x
-            z_new.y = (1 + self.gossip_step) * self.mix_mat.dot(z.y) - self.gossip_step * z_old.y
+            z_new.x = (1 + self.gossip_step) * self.mix_mat.dot(
+                z.x
+            ) - self.gossip_step * z_old.x
+            z_new.y = (1 + self.gossip_step) * self.mix_mat.dot(
+                z.y
+            ) - self.gossip_step * z_old.y
             z_old = z.copy()
             z = z_new.copy()
         return z

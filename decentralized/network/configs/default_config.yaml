@@ -1,0 +1,36 @@
+default_epoch:
+  duration: 2
+  default_state:
+    topology: complete
+    directed: False
+    fixed: False
+    MST: True
+    plot: False
+    args: {}
+  states: {}
+epochs:
+  - interval: !!python/tuple [1, 4]
+    default_state:
+      topology: complete
+      directed: False
+      fixed: False
+      MST: True
+      plot: False
+      args: {}
+    states:
+      1:
+        topology: complete
+        directed: False
+        fixed: False
+        MST: False
+        plot: False
+        args: {}
+      3:
+        topology: erdos_renyi
+        directed: False
+        fixed: False
+        MST: True
+        plot: False
+        args:
+          p: 0.9
+          seed: 30

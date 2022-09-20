@@ -1,19 +1,24 @@
 import numpy as np
-import pytest
 from decentralized.loggers.logger import LoggerDecentralized
 from decentralized.methods import DecentralizedVIADOM
+from decentralized.network.config_manager import NetworkConfigManager
+from decentralized.network.network import Network
 from decentralized.oracles.base import ArrayPair
 from decentralized.oracles.saddle_simple import SquareDiffOracle
-from decentralized.utils import compute_lam, ring_gos_mat
 
 
-@pytest.mark.tryfirst
 def test_decentralized_vi_adom():
     np.random.seed(0)
     d = 20
+    num_states = 1000
     num_nodes = 10
-    W = ring_gos_mat(num_nodes)
-    lam = compute_lam(W)[0]
+    network = Network(
+        num_states,
+        num_nodes,
+        "gos_mat",
+        config_manager=NetworkConfigManager("tests/test_utils/network.yaml"),
+    )
+    lam = network.peek()[1]
 
     oracles = [
         SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes)
@@ -78,11 +83,12 @@ def test_decentralized_vi_adom():
         tau=tau,
         nu=nu,
         beta=beta,
-        gos_mat=W,
+        network=network,
         logger=logger,
     )
 
     method.run(max_iter=2000)
+    print(logger.argument_primal_distance_to_opt)
     assert logger.argument_primal_distance_to_opt[-1] <= 0.05
     assert logger.argument_primal_distance_to_consensus[-1] <= 0.5
     assert logger.gradient_primal_distance_to_opt[-1] <= 0.05

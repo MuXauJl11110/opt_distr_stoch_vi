@@ -9,8 +9,9 @@ from decentralized.experiment.decentralized_vi_papc import run_vi_papc
 from decentralized.experiment.plotting import plot_algorithms, preplot_algorithms
 from decentralized.experiment.saddle_sliding import run_sliding
 from decentralized.experiment.saving import save_algorithms
+from decentralized.network.config_manager import NetworkConfigManager
+from decentralized.network.network import Network
 from decentralized.oracles.base import ArrayPair
-from decentralized.utils.generate_matrices import metropolis_weights
 from decentralized.utils.utils import get_oracles, solve_with_extragradient_real_data
 from IPython.display import clear_output
 from tqdm import tqdm
@@ -20,9 +21,9 @@ def run_experiment(
     methods: List[str],
     topologies: List[str],
     datasets: List[str],
-    adj_mat: Dict[str, np.ndarray],
-    gos_mat: Dict[str, np.ndarray],
+    network_configs: Dict[str, NetworkConfigManager],
     num_nodes: int,
+    num_states: int,
     labels: List[str],
     regcoef_x: float,
     regcoef_y: float,
@@ -43,7 +44,7 @@ def run_experiment(
         z_0=z_0,
         z_true=z_true,
         g_true=g_true,
-        mix_mat=mix_mat,
+        network=network,
         r_x=r_x,
         r_y=r_y,
         comm_budget_experiment=comm_budget_experiment,
@@ -55,7 +56,7 @@ def run_experiment(
         z_0=z_0,
         z_true=z_true,
         g_true=g_true,
-        mix_mat=mix_mat,
+        network=network,
         r_x=r_x,
         r_y=r_y,
         eps=eps,
@@ -69,7 +70,7 @@ def run_experiment(
         z_0=z_0,
         z_true=z_true,
         g_true=g_true,
-        mix_mat=mix_mat,
+        network=network,
         r_x=r_x,
         r_y=r_y,
         eps=eps,
@@ -83,7 +84,7 @@ def run_experiment(
         z_0=z_0,
         z_true=z_true,
         g_true=g_true,
-        gos_mat=W,
+        network=network,
         r_x=r_x,
         r_y=r_y,
         comm_budget_experiment=comm_budget_experiment,
@@ -100,7 +101,7 @@ def run_experiment(
         z_0=z_0,
         z_true=z_true,
         g_true=g_true,
-        gos_mat=W,
+        network=network,
         r_x=r_x,
         r_y=r_y,
         comm_budget_experiment=comm_budget_experiment,
@@ -111,6 +112,13 @@ def run_experiment(
         "sliding": sliding_runner,
         # "vi_papc": vi_papc_runner,
         "vi_adom": vi_adom_runner,
+    }
+    method_to_mat = {
+        "extragrad": "mix_mat",
+        "extragrad_con": "mix_mat",
+        "sliding": "mix_mat",
+        # "vi_papc": "gos_mat",
+        "vi_adom": "gos_mat",
     }
     for dataset_name in tqdm(datasets, desc="Datasets..."):
         A, b = get_A_b(dataset_name)
@@ -154,10 +162,12 @@ def run_experiment(
             methods_exp = []
             method_names_exp = []
             labels_exp = []
-            mix_mat = metropolis_weights(adj_mat[topology])
-            W = gos_mat[topology]
+            network_cfg = network_configs[topology]
+            network = Network(num_states, num_nodes, "mix_mat", network_cfg)
 
             for method, label in tqdm(zip(methods, labels), desc="Methods..."):
+                network.current_state = 0
+                network.matrix_type = method_to_mat[method]
                 clear_output(wait=True)
                 print(f"Method: {label}")
 

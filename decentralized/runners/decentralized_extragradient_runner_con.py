@@ -1,43 +1,45 @@
 from typing import List
 
 import numpy as np
+from decentralized import network
 from decentralized.loggers import Logger
 from decentralized.methods import ConstraintsL2, DecentralizedExtragradientCon
+from decentralized.network import Network
 from decentralized.oracles import BaseSmoothSaddleOracle
 from decentralized.utils import compute_lam_2
 
 
-class DecentralizedExtragradientConRunner(object):
+class DecentralizedExtragradientConRunner:
     def __init__(
         self,
         oracles: List[BaseSmoothSaddleOracle],
         L: float,
         mu: float,
-        mix_mat: np.ndarray,
+        network: Network,
         r_x: float,
         r_y: float,
         eps: float,
-        logger: Logger,
     ):
         self.oracles = oracles
         self.L = L
         self.mu = mu
-        self.mix_mat = mix_mat
+        self.network = network
         self.constraints = ConstraintsL2(r_x, r_y)
         self.eps = eps
-        self.logger = logger
         self._params_computed = False
 
     def compute_method_params(self):
-        self._lam = compute_lam_2(self.mix_mat)
+        self._lam = compute_lam_2(self.network.peek()[0])
         self.gamma = 1 / (4 * self.L)
-        self.gossip_step = (1 - np.sqrt(1 - self._lam ** 2)) / (1 + np.sqrt(1 - self._lam ** 2))
+        self.gossip_step = (1 - np.sqrt(1 - self._lam**2)) / (
+            1 + np.sqrt(1 - self._lam**2)
+        )
         eps_0 = self.eps * self.mu * self.gamma * (1 + self.gamma * self.L) ** 2
         self.con_iters = int(np.sqrt(1 / (1 - self._lam)) * np.log(1 / eps_0))
         # rough estimate on con_iters (lower than actual)
         self._params_computed = True
 
-    def create_method(self, z_0):
+    def create_method(self, z_0, logger: Logger):
         if self._params_computed == False:
             raise ValueError("Call compute_method_params first")
 
@@ -45,10 +47,10 @@ class DecentralizedExtragradientConRunner(object):
             oracles=self.oracles,
             stepsize=self.gamma,
             con_iters=self.con_iters,
-            mix_mat=self.mix_mat,
+            network=self.network,
             gossip_step=self.gossip_step,
             z_0=z_0,
-            logger=self.logger,
+            logger=logger,
             constraints=self.constraints,
         )
 

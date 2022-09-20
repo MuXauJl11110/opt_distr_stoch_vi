@@ -2,6 +2,7 @@ from typing import List, Optional
 
 import numpy as np
 from decentralized.loggers.logger import LoggerDecentralized
+from decentralized.network.network import Network
 from decentralized.oracles.base import ArrayPair, BaseSmoothSaddleOracle
 from decentralized.runners.decentralized_extragradient_runner_con import (
     DecentralizedExtragradientConRunner,
@@ -15,7 +16,7 @@ def run_extragrad_con(
     z_0: ArrayPair,
     z_true: ArrayPair,
     g_true: ArrayPair,
-    mix_mat: np.ndarray,
+    network: Network,
     r_x: float,
     r_y: float,
     eps: float,
@@ -26,11 +27,10 @@ def run_extragrad_con(
         oracles=oracles,
         L=L,
         mu=mu,
-        mix_mat=mix_mat,
+        network=network,
         r_x=r_x,
         r_y=r_y,
         eps=eps,
-        logger=LoggerDecentralized(z_true=z_true, g_true=g_true),
     )
     extragrad_con_runner.compute_method_params()
 
@@ -42,13 +42,14 @@ def run_extragrad_con(
     else:
         print("Running decentralized extragradient-con...")
 
-    extragrad_con_runner.create_method(z_0)
+    extragrad_con_runner.create_method(
+        z_0,
+        logger=LoggerDecentralized(z_true=z_true, g_true=g_true),
+    )
     print("T_consensus = {}".format(extragrad_con_runner.method.con_iters))
-    extragrad_con_runner.logger.comm_per_iter = (
+    extragrad_con_runner.method.logger.comm_per_iter = (
         2 * extragrad_con_runner.method.con_iters
     )
-    extragrad_con_runner.run(
-        max_iter=comm_budget_experiment // extragrad_con_runner.logger.comm_per_iter
-    )
+    extragrad_con_runner.run(max_iter=comm_budget_experiment)
 
     return extragrad_con_runner

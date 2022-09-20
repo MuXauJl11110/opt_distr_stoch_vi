@@ -3,11 +3,11 @@ from typing import List
 import numpy as np
 from decentralized.loggers import LoggerDecentralized
 from decentralized.methods import ConstraintsL2, DecentralizedVIADOM
+from decentralized.network.network import Network
 from decentralized.oracles import ArrayPair, BaseSmoothSaddleOracle
-from decentralized.utils import compute_lam
 
 
-class DecentralizedVIADOMRunner(object):
+class DecentralizedVIADOMRunner:
     def __init__(
         self,
         oracles: List[BaseSmoothSaddleOracle],
@@ -15,23 +15,21 @@ class DecentralizedVIADOMRunner(object):
         L: float,
         L_avg: float,
         mu: float,
-        gos_mat: np.ndarray,
+        network: Network,
         r_x: float,
         r_y: float,
-        logger: LoggerDecentralized,
     ):
         self.oracles = oracles
         self.b = b
         self.L = L
         self.L_avg = L_avg
         self.mu = mu
-        self.gos_mat = gos_mat
+        self.network = network
         self.constraints = ConstraintsL2(r_x, r_y)
-        self.logger = logger
         self._params_computed = False
 
     def compute_method_params(self):
-        self._lam = compute_lam(self.gos_mat)[0]
+        self._lam = self.network.peek()[1]
         self.chi = 1 / self._lam
         self.p = 1 / 16
         self.omega = self.p
@@ -60,7 +58,11 @@ class DecentralizedVIADOMRunner(object):
         self._params_computed = True
 
     def create_method(
-        self, x_0: List[ArrayPair], y_0: List[ArrayPair], z_0: List[ArrayPair]
+        self,
+        x_0: List[ArrayPair],
+        y_0: List[ArrayPair],
+        z_0: List[ArrayPair],
+        logger: LoggerDecentralized,
     ):
         if self._params_computed == False:
             raise ValueError("Call compute_method_params first")
@@ -80,8 +82,8 @@ class DecentralizedVIADOMRunner(object):
             tau=self.tau,
             nu=self.nu,
             beta=self.beta,
-            gos_mat=self.gos_mat,
-            logger=self.logger,
+            network=self.network,
+            logger=logger,
             constraints=self.constraints,
         )
 

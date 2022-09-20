@@ -1,7 +1,9 @@
+from operator import ne
 from typing import List, Optional
 
 import numpy as np
 from decentralized.loggers.logger import LoggerDecentralized
+from decentralized.network.network import Network
 from decentralized.oracles.base import ArrayPair, BaseSmoothSaddleOracle
 from decentralized.runners.decentralized_sliding_runner import (
     DecentralizedSaddleSlidingRunner,
@@ -17,7 +19,7 @@ def run_sliding(
     z_0: ArrayPair,
     z_true: ArrayPair,
     g_true: ArrayPair,
-    mix_mat: np.ndarray,
+    network: Network,
     r_x: float,
     r_y: float,
     eps: float,
@@ -29,11 +31,10 @@ def run_sliding(
         L=L,
         mu=mu,
         delta=delta,
-        mix_mat=mix_mat,
+        network=network,
         r_x=r_x,
         r_y=r_y,
         eps=eps,
-        logger=LoggerDecentralized(z_true=z_true, g_true=g_true),
     )
     sliding_runner.compute_method_params()
 
@@ -45,7 +46,10 @@ def run_sliding(
     else:
         print("Running decentralized sliding...")
 
-    sliding_runner.create_method(z_0)
+    sliding_runner.create_method(
+        z_0,
+        logger=LoggerDecentralized(z_true=z_true, g_true=g_true),
+    )
 
     print(
         "H_0 = {}, H_1 = {}, T_subproblem = {}".format(
@@ -54,9 +58,9 @@ def run_sliding(
             sliding_runner.method.inner_iterations,
         )
     )
-    sliding_runner.logger.comm_per_iter = sliding_comm_per_iter(sliding_runner.method)
-    sliding_runner.run(
-        max_iter=comm_budget_experiment // sliding_runner.logger.comm_per_iter
+    sliding_runner.method.logger.comm_per_iter = sliding_comm_per_iter(
+        sliding_runner.method
     )
+    sliding_runner.run(max_iter=comm_budget_experiment)
 
     return sliding_runner

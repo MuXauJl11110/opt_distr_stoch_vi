@@ -4,6 +4,7 @@ import numpy as np
 from decentralized.loggers.logger import Logger
 from decentralized.methods.base import BaseSaddleMethod
 from decentralized.methods.constraints import ConstraintsL2
+from decentralized.network.network import Network
 from decentralized.oracles.base import (
     ArrayPair,
     BaseSmoothSaddleOracle,
@@ -38,8 +39,8 @@ class DecentralizedVIADOM(BaseSaddleMethod):
     nu, beta: float
         Parameters.
 
-    gos_mat: np.ndarray
-        Gossip matrix is multiplication of T gossip matrices.
+    network: Network
+        Network consisting of gossip matrices.
 
     logger: Optional[Logger]
         Stores the history of the method during its iterations.
@@ -64,7 +65,7 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         tau: float,
         nu: float,
         beta: float,
-        gos_mat: np.ndarray,
+        network: Network,
         logger=Optional[Logger],
         constraints: Optional[ConstraintsL2] = None,
     ):
@@ -88,7 +89,7 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         self.nu = nu
         self.beta = beta
 
-        self.gos_mat = gos_mat
+        self.network = network
 
         if constraints is not None:
             self.constraints = constraints
@@ -155,6 +156,11 @@ class DecentralizedVIADOM(BaseSaddleMethod):
         Delta_x = (y_list_c + x_list_c) / self.nu + self.beta * (
             self.x_list + delta_half
         )
+
+        self.gos_mat = self.network.__next__()[0]
+        if self.logger is not None:
+            self.logger.step(self)
+
         x_mixed = ArrayPair(
             self.gos_mat @ (self.eta_x * Delta_x.x + self.m_list.x),
             self.gos_mat @ (self.eta_x * Delta_x.y + self.m_list.y),

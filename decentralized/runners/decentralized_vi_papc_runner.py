@@ -3,39 +3,41 @@ from typing import List
 import numpy as np
 from decentralized.loggers import LoggerDecentralized
 from decentralized.methods import ConstraintsL2, DecentralizedVIPAPC
+from decentralized.network.network import Network
 from decentralized.oracles import ArrayPair, BaseSmoothSaddleOracle
-from decentralized.utils import compute_lam
 
 
-class DecentralizedVIPAPCRunner(object):
+class DecentralizedVIPAPCRunner:
     def __init__(
         self,
         oracles: List[BaseSmoothSaddleOracle],
         L: float,
         mu: float,
-        gos_mat: np.ndarray,
+        network: Network,
         r_x: float,
         r_y: float,
-        logger: LoggerDecentralized,
     ):
         self.oracles = oracles
         self.L = L
         self.mu = mu
-        self.gos_mat = gos_mat
+        self.network = network
         self.constraints = ConstraintsL2(r_x, r_y)
-        self.logger = logger
         self._params_computed = False
 
     def compute_method_params(self):
-        self._lam = compute_lam(self.gos_mat)[0]
+        self._lam = self.network.peek()[1]
         self.chi = 1 / self._lam
-        self.beta = self.mu / (self.L ** 2)
+        self.beta = self.mu / (self.L**2)
         self.theta = min(1 / (2 * self.beta), self.L * np.sqrt(self.chi) / 3)
         self.eta = 1 / (3 * self.L * np.sqrt(self.chi))
-        self.alpha = 1 - min(1 / (1 + 3 * self.L * np.sqrt(self.chi) / self.mu), 1 / (2 * self.chi))
+        self.alpha = 1 - min(
+            1 / (1 + 3 * self.L * np.sqrt(self.chi) / self.mu), 1 / (2 * self.chi)
+        )
         self._params_computed = True
 
-    def create_method(self, z_0: List[ArrayPair], y_0: List[ArrayPair]):
+    def create_method(
+        self, z_0: List[ArrayPair], y_0: List[ArrayPair], logger: LoggerDecentralized
+    ):
         if self._params_computed == False:
             raise ValueError("Call compute_method_params first")
 
@@ -47,8 +49,8 @@ class DecentralizedVIPAPCRunner(object):
             theta=self.theta,
             alpha=self.alpha,
             beta=self.beta,
-            gos_mat=self.gos_mat,
-            logger=self.logger,
+            network=self.network,
+            logger=logger,
             constraints=self.constraints,
         )
 
