@@ -1,0 +1,11 @@
+default_epoch:
+  duration: 1
+  default_state:
+    topology: star
+    directed: False
+    fixed: False
+    MST: False
+    plot: False
+    args: {}
+  states: {}
+epochs: []

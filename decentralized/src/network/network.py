@@ -133,7 +133,7 @@ class Network(object):
 
         def get_L(G):
             self.nodelist = (
-                None if config["fixed"] else np.random.permutation(num_nodes)
+                None if config["fixed"] else np.random.permutation(self.num_nodes)
             )
 
             L_gos = (

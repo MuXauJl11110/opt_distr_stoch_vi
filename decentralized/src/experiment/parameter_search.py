@@ -1,9 +1,11 @@
 import os
 import pickle
+import traceback
 from typing import Callable, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+from definitions import ROOT_DIR
 from IPython.display import clear_output
 from src.experiment.decentralized_extragradient_con import run_extragrad_con
 from src.experiment.decentralized_extragradient_gt import run_extragrad_gt
@@ -38,7 +40,7 @@ def parameter_search(
     experiment_type: str,
     stepsize_factors: List[float],
     get_A_b: Callable[[str], Tuple[np.ndarray, np.ndarray]],
-    logs_path: Optional[str] = "./logs",
+    logs_path: Optional[str] = "logs",
 ):
     extragrad_gt_runner = lambda stepsize_factor: run_extragrad_gt(
         oracles=oracles,
@@ -161,11 +163,16 @@ def parameter_search(
             )
 
             path = os.path.join(
-                logs_path, experiment_type, topology, f"{num_nodes}_{dataset_name}"
+                ROOT_DIR,
+                logs_path,
+                experiment_type,
+                topology,
+                f"{num_nodes}_{dataset_name}",
             )
             if os.path.exists(path):
                 with open(os.path.join(path, "z_true"), "rb") as f:
                     z_true = pickle.load(f)
+
             elif precomputed_z_true is False:
                 z_true = solve_with_extragradient_real_data(
                     A=A,
