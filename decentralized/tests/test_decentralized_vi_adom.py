@@ -1,29 +1,23 @@
-import sys
-
-sys.path.append("../")
 import numpy as np
-import pytest
-from decentralized.loggers.logger import LoggerDecentralized
-from decentralized.methods.decentralized_vi_adom import DecentralizedVIADOM
-from decentralized.network.config_manager import NetworkConfigManager
-from decentralized.network.network import Network
-from decentralized.oracles.base import ArrayPair
-from decentralized.oracles.saddle_simple import SquareDiffOracle
+from src.loggers.logger import LoggerDecentralized
+from src.methods.decentralized_vi_adom import DecentralizedVIADOM
+from src.network.config_manager import NetworkConfigManager
+from src.network.network import Network
+from src.oracles.base import ArrayPair
+from src.oracles.saddle_simple import SquareDiffOracle
 
 
-@pytest.mark.tryfirst
 def test_decentralized_vi_adom():
     np.random.seed(0)
     d = 20
-    num_states = 1000
     num_nodes = 10
+    num_states = 1000
     network = Network(
         num_states,
         num_nodes,
         "gos_mat",
         config_manager=NetworkConfigManager(
-            "tests/test_utils/network.yaml",
-            "network/configs/general_config.yaml",
+            "tests/test_utils/cycle.yaml",
         ),
     )
     lam = network.peek()[1]
@@ -49,9 +43,7 @@ def test_decentralized_vi_adom():
     tau = min(mu / (32 * L * chi), mu * np.sqrt(b * omega) / (32 * L_avg))
     eta_x = min(1 / (900 * chi * gamma), nu / (36 * tau * (chi**2)))
     eta_y = min(1 / (4 * gamma), nu / (8 * tau))
-    eta_z = min(
-        1 / (8 * L * chi), 1 / (32 * eta_y), np.sqrt(alpha * b * omega) / (8 * L_avg)
-    )
+    eta_z = min(1 / (8 * L), 1 / (32 * eta_y), np.sqrt(alpha * b * omega) / (8 * L_avg))
     logger = LoggerDecentralized(
         z_true=ArrayPair(np.zeros(d), np.zeros(d)),
         g_true=ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d))),
@@ -94,7 +86,7 @@ def test_decentralized_vi_adom():
         logger=logger,
     )
 
-    method.run(max_iter=2000)
+    method.run(max_iter=num_states)
     print(logger.argument_primal_distance_to_opt)
     assert logger.argument_primal_distance_to_opt[-1] <= 0.05
     assert logger.argument_primal_distance_to_consensus[-1] <= 0.5

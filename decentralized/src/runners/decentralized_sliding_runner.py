@@ -1,0 +1,97 @@
+from typing import List
+
+import numpy as np
+from src.loggers.logger import Logger
+from src.methods.saddle_sliding import DecentralizedSaddleSliding
+from src.network.network import Network
+from src.oracles.base import ArrayPair, BaseSmoothSaddleOracle
+from src.utils.compute_params import compute_lam_2
+
+
+class DecentralizedSaddleSlidingRunner:
+    def __init__(
+        self,
+        oracles: List[BaseSmoothSaddleOracle],
+        L: float,
+        mu: float,
+        delta: float,
+        network: Network,
+        r_x: float,
+        r_y: float,
+        eps: float,
+    ):
+        self.oracles = oracles
+        self.L = L
+        self.mu = mu
+        self.delta = delta
+        self.network = network
+        self.r_x = r_x
+        self.r_y = r_y
+        self.eps = eps
+        self._params_computed = False
+
+    def compute_method_params(self):
+        self.gamma = min(1.0 / (7 * self.delta), 1 / (12 * self.mu))  # outer step-size
+        self.e = 0.5 / (
+            2
+            + 12 * self.gamma**2 * self.delta**2
+            + 4 / (self.gamma * self.mu)
+            + (8 * self.gamma * self.delta**2) / self.mu
+        )
+        self.gamma_inner = 0.5 / (self.gamma * self.L + 1)
+        self.T_inner = int((1 + self.gamma * self.L) * np.log10(1 / self.e))
+        self._lam = compute_lam_2(self.network.peek()[0])
+        self.gossip_step = (1 - np.sqrt(1 - self._lam**2)) / (
+            1 + np.sqrt(1 - self._lam**2)
+        )
+
+        self._omega = 2 * np.sqrt(self.r_x**2 + self.r_y**2)
+        self._g = 0.0  # upper bound on gradient at optimum; let it be 0 for now
+        self._rho = 1 - self._lam
+        self._num_nodes = len(self.oracles)
+        self.con_iters_grad = int(
+            1
+            / np.sqrt(self._rho)
+            * np.log(
+                (self.gamma * 2 + self.gamma / self.mu)
+                * self._num_nodes
+                * (self.L * self._omega + self._g) ** 2
+                / (self.eps * self.gamma * self.mu)
+            )
+        )
+        self.con_iters_pt = int(
+            1
+            / np.sqrt(self._rho)
+            * np.log(
+                (1 + self.gamma**2 * self.L**2 + self.gamma * self.L**2 / self.mu)
+                * self._num_nodes
+                * self._omega**2
+                / (self.eps * self.gamma * self.mu)
+            )
+        )
+        self._params_computed = True
+
+    def create_method(self, z_0: ArrayPair, logger: Logger):
+        if self._params_computed == False:
+            raise ValueError("Call compute_method_params first")
+
+        self.method = DecentralizedSaddleSliding(
+            oracles=self.oracles,
+            stepsize_outer=self.gamma,
+            stepsize_inner=self.gamma_inner,
+            inner_iterations=self.T_inner,
+            con_iters_grad=self.con_iters_grad,
+            con_iters_pt=self.con_iters_pt,
+            network=self.network,
+            gossip_step=self.gossip_step,
+            z_0=z_0,
+            logger=logger,
+            constraints=None,
+        )
+
+    def run(self, max_iter, max_time=None):
+        self.method.run(max_iter, max_time)
+
+
+def sliding_comm_per_iter(runner: DecentralizedSaddleSlidingRunner):
+    return 2 * (runner.con_iters_grad + runner.con_iters_pt)

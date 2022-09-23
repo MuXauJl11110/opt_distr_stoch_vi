@@ -1,6 +1,7 @@
 import numpy as np
-from decentralized.oracles import ArrayPair, create_robust_linear_oracle
-from decentralized.utils import grad_finite_diff_saddle
+from src.oracles.base import ArrayPair
+from src.oracles.robust_linear import create_robust_linear_oracle
+from src.utils.utils import grad_finite_diff_saddle
 
 
 def test_robust_linear_oracle_normed():
@@ -8,7 +9,9 @@ def test_robust_linear_oracle_normed():
     n, d = 50, 8
     A = np.random.randn(n, d)
     b = np.random.randn(n)
-    oracle = create_robust_linear_oracle(A, b, regcoef_x=0.1, regcoef_delta=0.5, normed=True)
+    oracle = create_robust_linear_oracle(
+        A, b, regcoef_x=0.1, regcoef_delta=0.5, normed=True
+    )
 
     for _ in range(20):
         z = ArrayPair(np.random.rand(d), np.random.rand(d))
@@ -27,7 +30,9 @@ def test_robust_linear_oracle_not_normed():
     n, d = 50, 8
     A = np.random.randn(n, d)
     b = np.random.randn(n)
-    oracle = create_robust_linear_oracle(A, b, regcoef_x=0.1, regcoef_delta=0.5, normed=False)
+    oracle = create_robust_linear_oracle(
+        A, b, regcoef_x=0.1, regcoef_delta=0.5, normed=False
+    )
 
     for _ in range(10):
         z = ArrayPair(np.random.rand(d), np.random.rand(d))

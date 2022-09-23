@@ -1,29 +1,41 @@
 import numpy as np
-from decentralized.loggers.logger import LoggerDecentralized
-from decentralized.methods import DecentralizedVIPAPC
-from decentralized.oracles.base import ArrayPair
-from decentralized.oracles.saddle_simple import SquareDiffOracle
-from decentralized.utils import compute_lam, ring_gos_mat
+from src.loggers.logger import LoggerDecentralized
+from src.methods import DecentralizedVIPAPC
+from src.network.config_manager import NetworkConfigManager
+from src.network.network import Network
+from src.oracles.base import ArrayPair
+from src.oracles.saddle_simple import SquareDiffOracle
+from src.utils.compute_params import compute_lam
 
 
 def test_decentralized_vi_papc():
     np.random.seed(0)
     d = 20
+    num_states = 1000
     num_nodes = 10
-    W = ring_gos_mat(num_nodes)
-    lam = compute_lam(W)[0]
+    network = Network(
+        num_states,
+        num_nodes,
+        "gos_mat",
+        config_manager=NetworkConfigManager(
+            "tests/test_utils/cycle.yaml",
+        ),
+    )
+    lam = network.peek()[1]
 
-    oracles = [SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes) for m in range(1, num_nodes + 1)]
+    oracles = [
+        SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes)
+        for m in range(1, num_nodes + 1)
+    ]
     L = 2.0
     mu = (num_nodes + 1) / num_nodes
 
-    beta = mu / (L ** 2)
+    beta = mu / (L**2)
     chi = 1 / lam
     theta = min(1 / (2 * beta), L * np.sqrt(chi) / 3)
     eta = 1 / (3 * L * np.sqrt(chi))
     alpha = 1 - min(1 / (1 + 3 * L * np.sqrt(chi) / mu), 1 / (2 * chi))
     logger = LoggerDecentralized(
-        default_config_path="../tests/test_utils/config_decentralized.yaml",
         z_true=ArrayPair(np.zeros(d), np.zeros(d)),
         g_true=ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d))),
     )
@@ -46,11 +58,11 @@ def test_decentralized_vi_papc():
         theta=theta,
         alpha=alpha,
         beta=beta,
-        gos_mat=W,
+        network=network,
         logger=logger,
     )
 
-    method.run(max_iter=1000)
+    method.run(max_iter=num_states)
     assert logger.argument_primal_distance_to_opt[-1] <= 0.05
     assert logger.argument_primal_distance_to_consensus[-1] <= 0.5
     assert logger.gradient_primal_distance_to_opt[-1] <= 0.05

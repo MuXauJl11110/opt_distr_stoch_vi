@@ -1,13 +1,11 @@
 import numpy as np
-from decentralized.loggers.logger import Logger, LoggerDecentralized
-from decentralized.methods import (
-    DecentralizedSaddleSliding,
-    SaddleSliding,
-    extragradient_solver,
-)
-from decentralized.oracles import ArrayPair, ScalarProdOracle, SquareDiffOracle
-from decentralized.tests.test_utils.utils import gen_mix_mat
-from decentralized.utils import compute_lam_2
+from src.loggers.logger import Logger, LoggerDecentralized
+from src.methods.extragradient import extragradient_solver
+from src.methods.saddle_sliding import DecentralizedSaddleSliding, SaddleSliding
+from src.network.config_manager import NetworkConfigManager
+from src.network.network import Network
+from src.oracles import ArrayPair, ScalarProdOracle, SquareDiffOracle
+from src.utils import compute_lam_2
 
 
 def test_sliding_simple():
@@ -18,11 +16,11 @@ def test_sliding_simple():
     oracle_phi = SquareDiffOracle(coef_x=0.5, coef_y=0.5)
     L, mu, delta = 1.0, 1.0, 0.01
     eta = min(1.0 / (2 * delta), 1 / (6 * mu))
-    e = min(0.25, 1 / (64 / (eta * mu) + 64 * eta * L ** 2 / mu))
+    e = min(0.25, 1 / (64 / (eta * mu) + 64 * eta * L**2 / mu))
     eta_inner = 0.5 / (eta * L + 1)
     T_inner = int((1 + eta * L) * np.log10(1 / e))
 
-    logger = Logger(default_config_path="../tests/test_utils/config_centralized.yaml")
+    logger = Logger()
     method = SaddleSliding(
         oracle_g=oracle_g,
         oracle_phi=oracle_phi,
@@ -43,21 +41,36 @@ def test_decentralized_sliding_simple():
     np.random.seed(0)
     d = 20
     num_nodes = 10
-    mix_mat = gen_mix_mat(num_nodes)
+    num_states = 500
+    network = Network(
+        num_states,
+        num_nodes,
+        "mix_mat",
+        config_manager=NetworkConfigManager(
+            "tests/test_utils/cycle.yaml",
+        ),
+    )
     z_0 = ArrayPair(np.random.rand(d), np.random.rand(d))
-    oracles = [SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes) for m in range(1, num_nodes + 1)]
+    oracles = [
+        SquareDiffOracle(coef_x=m / num_nodes, coef_y=1 - m / num_nodes)
+        for m in range(1, num_nodes + 1)
+    ]
     L = 2.0
     mu = (num_nodes + 1) / num_nodes
     delta = (num_nodes - 1) / num_nodes
     gamma = min(1.0 / (7 * delta), 1 / (12 * mu))  # outer step-size
-    e = 0.5 / (2 + 12 * gamma ** 2 * delta ** 2 + 4 / (gamma * mu) + (8 * gamma * delta ** 2) / mu)
+    e = 0.5 / (
+        2
+        + 12 * gamma**2 * delta**2
+        + 4 / (gamma * mu)
+        + (8 * gamma * delta**2) / mu
+    )
     gamma_inner = 0.5 / (gamma * L + 1)
     T_inner = int((1 + gamma * L) * np.log10(1 / e))
-    lam = compute_lam_2(mix_mat)
-    gossip_step = (1 - np.sqrt(1 - lam ** 2)) / (1 + np.sqrt(1 - lam ** 2))
+    lam = compute_lam_2(network.peek()[0])
+    gossip_step = (1 - np.sqrt(1 - lam**2)) / (1 + np.sqrt(1 - lam**2))
 
     logger = LoggerDecentralized(
-        default_config_path="../tests/test_utils/config_decentralized.yaml",
         z_true=ArrayPair(np.zeros(d), np.zeros(d)),
         g_true=ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d))),
     )
@@ -68,13 +81,13 @@ def test_decentralized_sliding_simple():
         inner_iterations=T_inner,
         con_iters_grad=20,
         con_iters_pt=20,
-        mix_mat=mix_mat,
+        network=network,
         gossip_step=gossip_step,
         z_0=z_0,
         logger=logger,
         constraints=None,
     )
-    method.run(max_iter=500)
+    method.run(max_iter=num_states)
 
     assert logger.argument_primal_distance_to_opt[-1] <= 0.05
     assert logger.argument_primal_distance_to_consensus[-1] <= 0.5
