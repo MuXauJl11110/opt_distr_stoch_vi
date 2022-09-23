@@ -1,12 +1,17 @@
+import sys
+
+sys.path.append("../")
 import numpy as np
+import pytest
 from decentralized.loggers.logger import LoggerDecentralized
-from decentralized.methods import DecentralizedVIADOM
+from decentralized.methods.decentralized_vi_adom import DecentralizedVIADOM
 from decentralized.network.config_manager import NetworkConfigManager
 from decentralized.network.network import Network
 from decentralized.oracles.base import ArrayPair
 from decentralized.oracles.saddle_simple import SquareDiffOracle
 
 
+@pytest.mark.tryfirst
 def test_decentralized_vi_adom():
     np.random.seed(0)
     d = 20
@@ -16,7 +21,10 @@ def test_decentralized_vi_adom():
         num_states,
         num_nodes,
         "gos_mat",
-        config_manager=NetworkConfigManager("tests/test_utils/network.yaml"),
+        config_manager=NetworkConfigManager(
+            "tests/test_utils/network.yaml",
+            "network/configs/general_config.yaml",
+        ),
     )
     lam = network.peek()[1]
 
@@ -45,7 +53,6 @@ def test_decentralized_vi_adom():
         1 / (8 * L * chi), 1 / (32 * eta_y), np.sqrt(alpha * b * omega) / (8 * L_avg)
     )
     logger = LoggerDecentralized(
-        default_config_path="../tests/test_utils/config_decentralized.yaml",
         z_true=ArrayPair(np.zeros(d), np.zeros(d)),
         g_true=ArrayPair(np.zeros((num_nodes, d)), np.zeros((num_nodes, d))),
     )
@@ -94,5 +101,5 @@ def test_decentralized_vi_adom():
     assert logger.gradient_primal_distance_to_opt[-1] <= 0.05
 
 
-if __name__ == "__main__":
-    test_decentralized_vi_adom()
+# if __name__ == "__main__":
+#     test_decentralized_vi_adom()

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from decentralized.network.config_manager import NetworkConfigManager
-from decentralized.utils import metropolis_weights
+from decentralized.utils.generate_matrices import metropolis_weights
 from definitions import ROOT_DIR
 
 
@@ -108,7 +108,7 @@ class Network(object):
                     )
 
                     filename = os.path.join(self.dirpath, f"{state}_gos_mat")
-                    np.save(filename, L_gos)
+                    np.save(filename, L_gos / self.max_lambdas[state])
                     filename = os.path.join(self.dirpath, f"{state}_mix_mat")
                     np.save(filename, L_mix)
 
