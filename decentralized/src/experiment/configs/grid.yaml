@@ -1,0 +1,11 @@
+default_epoch:
+  duration: 1
+  default_state:
+    topology: grid
+    directed: False
+    fixed: False
+    MST: False
+    plot: False
+    args: { periodic: True }
+  states: {}
+epochs: []

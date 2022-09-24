@@ -308,3 +308,16 @@ class Network(object):
         plt.tight_layout()
         plt.savefig(os.path.join(ROOT_DIR, self.save_to))
         plt.close(fig)
+
+    def grid_graph(self, n: int, **args: dict):
+        height = int(np.sqrt(n))
+        weight = height
+        map_ = {}
+        idx = 0
+        for i in range(height):
+            for j in range(weight):
+                map_[(i, j)] = idx
+                idx += 1
+        return nx.relabel_nodes(
+            nx.grid_2d_graph(n=height, m=weight, **args), mapping=map_, copy=False
+        )

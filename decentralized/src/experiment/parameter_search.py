@@ -163,15 +163,27 @@ def parameter_search(
             )
 
             path = os.path.join(
-                ROOT_DIR,
                 logs_path,
                 experiment_type,
                 topology,
                 f"{num_nodes}_{dataset_name}",
             )
             if os.path.exists(path):
-                with open(os.path.join(path, "z_true"), "rb") as f:
-                    z_true = pickle.load(f)
+                try:
+                    with open(os.path.join(path, "z_true"), "rb") as file:
+                        z_true = pickle.load(file)
+                except ModuleNotFoundError:
+                    z_true = solve_with_extragradient_real_data(
+                        A=A,
+                        b=b,
+                        regcoef_x=regcoef_x,
+                        regcoef_y=regcoef_y,
+                        r_x=r_x,
+                        r_y=r_y,
+                        num_iter=num_iter_solution,
+                        max_time=max_time_solution,
+                        tolerance=tolerance_solution,
+                    )
 
             elif precomputed_z_true is False:
                 z_true = solve_with_extragradient_real_data(

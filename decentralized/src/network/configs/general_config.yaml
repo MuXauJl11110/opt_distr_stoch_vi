@@ -4,6 +4,7 @@ available_topologies:
     - complete
     - star
     - cycle
+    - grid
   random:
     - erdos_renyi
 
@@ -32,6 +33,17 @@ topology:
     func: fast_gnp_random_graph
     bias: False
 
+  # grid:
+  #   type: classic
+  #   object: nx.generators.lattice
+  #   func: grid_graph
+  #   bias: False
+  grid:
+    type: classic
+    object: self
+    func: grid_graph
+    bias: False
+
 schema:
   - !!python/tuple [
       { topology: str, directed: bool, fixed: bool, MST: bool, plot: bool },
@@ -45,6 +57,7 @@ schema:
               seed: "And(int, Use(lambda n: n > 0))",
             },
         },
+        { args: { periodic: bool } },
       ],
     ]
 
