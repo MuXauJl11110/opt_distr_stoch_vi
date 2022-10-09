@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from src.loggers.logger import LoggerDecentralized
 from src.network.network import Network
@@ -22,7 +22,7 @@ def run_vi_adom(
     r_x: float,
     r_y: float,
     comm_budget_experiment: int,
-    stepsize_factor: Optional[float] = None,
+    stepsize_factors: Optional[Dict[str, float]] = None,
 ):
     vi_adom_runner = DecentralizedVIADOMRunner(
         oracles=oracles,
@@ -40,10 +40,16 @@ def run_vi_adom(
 
     vi_adom_runner.compute_method_params()
 
-    if stepsize_factor is not None:
-        vi_adom_runner.eta_z = stepsize_factor / L
-        # vi_adom_runner.eta_z *= stepsize_factor
-        print(f"Running src VI ADOM with stepsize_factor: {stepsize_factor}...")
+    if stepsize_factors is not None:
+        output_str = ""
+        for parameter, stepsize in stepsize_factors.items():
+            attr = getattr(vi_adom_runner, parameter)
+            if attr == "eta_z":
+                vi_adom_runner.eta_z = stepsize / L
+            else:
+                attr *= stepsize
+            output_str += f"{parameter}={stepsize}"
+        print(f"Running src VI ADOM with {output_str} parameters...")
     else:
         print("Running src VI ADOM...")
 

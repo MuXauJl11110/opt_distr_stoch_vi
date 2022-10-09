@@ -1,5 +1,5 @@
 import random
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 from src.loggers.logger import LoggerDecentralized
@@ -35,7 +35,7 @@ def run_vi_papc(
     r_x: float,
     r_y: float,
     comm_budget_experiment: int,
-    stepsize_factor: Optional[float] = None,
+    stepsize_factors: Optional[Dict[str, float]] = None,
     random_y_0: Optional[bool] = False,
 ):
     vi_papc_runner = DecentralizedVIPAPCRunner(
@@ -54,9 +54,13 @@ def run_vi_papc(
 
     vi_papc_runner.compute_method_params()
 
-    if stepsize_factor is not None:
-        vi_papc_runner.eta *= stepsize_factor
-        print(f"Running src VI PAPC with stepsize_factor: {stepsize_factor}...")
+    if stepsize_factors is not None:
+        output_str = ""
+        for parameter, stepsize in stepsize_factors.items():
+            attr = getattr(vi_papc_runner, parameter)
+            attr *= stepsize
+            output_str += f"{parameter}={stepsize}"
+        print(f"Running src VI PAPC with {output_str} parameters...")
     else:
         print("Running src VI PAPC...")
 

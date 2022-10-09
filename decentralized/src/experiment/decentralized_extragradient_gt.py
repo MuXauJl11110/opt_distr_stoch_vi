@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from src.loggers.logger import LoggerDecentralized
 from src.network.network import Network
@@ -19,7 +19,7 @@ def run_extragrad_gt(
     r_x: float,
     r_y: float,
     comm_budget_experiment: int,
-    stepsize_factor: Optional[float] = None,
+    stepsize_factors: Optional[Dict[str, float]] = None,
 ) -> DecentralizedExtragradientGTRunner:
     extragrad_runner = DecentralizedExtragradientGTRunner(
         oracles=oracles,
@@ -32,9 +32,13 @@ def run_extragrad_gt(
     )
     extragrad_runner.compute_method_params()
 
-    if stepsize_factor is not None:
-        extragrad_runner.eta *= stepsize_factor
-        print(f"Running src extragradient with stepsize_factor: {stepsize_factor}...")
+    if stepsize_factors is not None:
+        output_str = ""
+        for parameter, stepsize in stepsize_factors.items():
+            attr = getattr(extragrad_runner, parameter)
+            attr *= stepsize
+            output_str += f"{parameter}={stepsize}"
+        print(f"Running src extragradient with {output_str} parameters...")
     else:
         print("Running src extragradient...")
 

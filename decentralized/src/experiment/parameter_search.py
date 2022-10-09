@@ -1,11 +1,10 @@
+import itertools
 import os
 import pickle
-import traceback
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-from definitions import ROOT_DIR
 from IPython.display import clear_output
 from src.experiment.decentralized_extragradient_con import run_extragrad_con
 from src.experiment.decentralized_extragradient_gt import run_extragrad_gt
@@ -38,7 +37,7 @@ def parameter_search(
     tolerance_solution: float,
     comm_budget_experiment: int,
     experiment_type: str,
-    stepsize_factors: List[float],
+    stepsize_factors: Dict[str, Dict[str, List[float]]],
     get_A_b: Callable[[str], Tuple[np.ndarray, np.ndarray]],
     logs_path: Optional[str] = "logs",
 ):
@@ -53,7 +52,7 @@ def parameter_search(
         r_x=r_x,
         r_y=r_y,
         comm_budget_experiment=comm_budget_experiment,
-        stepsize_factor=stepsize_factor,
+        stepsize_factors=stepsize_factor,
     )
     extragrad_con_runner = lambda stepsize_factor: run_extragrad_con(
         oracles=oracles,
@@ -67,7 +66,7 @@ def parameter_search(
         r_y=r_y,
         eps=eps,
         comm_budget_experiment=comm_budget_experiment,
-        stepsize_factor=stepsize_factor,
+        stepsize_factors=stepsize_factor,
     )
     sliding_runner = lambda stepsize_factor: run_sliding(
         oracles=oracles,
@@ -82,7 +81,7 @@ def parameter_search(
         r_y=r_y,
         eps=eps,
         comm_budget_experiment=comm_budget_experiment,
-        stepsize_factor=stepsize_factor,
+        stepsize_factors=stepsize_factor,
     )
     vi_papc_runner = lambda stepsize_factor: run_vi_papc(
         num_nodes=num_nodes,
@@ -96,7 +95,7 @@ def parameter_search(
         r_x=r_x,
         r_y=r_y,
         comm_budget_experiment=comm_budget_experiment,
-        stepsize_factor=stepsize_factor,
+        stepsize_factors=stepsize_factor,
     )
     vi_adom_runner = lambda stepsize_factor: run_vi_adom(
         num_nodes=num_nodes,
@@ -114,7 +113,7 @@ def parameter_search(
         r_x=r_x,
         r_y=r_y,
         comm_budget_experiment=comm_budget_experiment,
-        stepsize_factor=stepsize_factor,
+        stepsize_factors=stepsize_factor,
     )
     method_to_runner = {
         "extragrad": extragrad_gt_runner,
@@ -211,16 +210,14 @@ def parameter_search(
                 methods_names_PS = []
                 labels_PS = []
 
-                for stepsize_factor in tqdm(
-                    stepsize_factors, desc="Stepsize factors..."
-                ):
-                    print(f"Stepsize factor: {stepsize_factor}")
+                for parameter in tqdm(get_param_grid(stepsize_factors[method]), desc="Parameters..."):
                     network.current_state = 0
                     network.matrix_type = method_to_mat[method]
 
-                    runners_PS.append(runner(stepsize_factor))
-                    methods_names_PS.append(method + f"_{stepsize_factor}.pkl")
-                    labels_PS.append(label + f" {stepsize_factor}")
+                    runners_PS.append(runner(parameter))
+                    substr = str("_".join([f"{k}={v}" for k, v in parameter.items()]))
+                    methods_names_PS.append(method + f"_{substr}.pkl")
+                    labels_PS.append(label + f" {substr}")
 
                 preplot_algorithms(
                     topology=topology,
@@ -257,3 +254,11 @@ def parameter_search(
                 labels_PS.clear()
 
         precomputed_z_true = False
+
+
+def get_param_grid(d: dict):
+    d_keys = list(d.keys())
+    if len(d_keys) == 1:
+        return [{d_keys[0]: v} for v in d[d_keys[0]]]
+    l = [d[v] for v in d_keys]
+    return [dict(zip(d_keys, v)) for v in itertools.product(*l)]

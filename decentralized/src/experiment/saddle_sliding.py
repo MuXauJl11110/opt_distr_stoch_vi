@@ -1,5 +1,4 @@
-from operator import ne
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from src.loggers.logger import LoggerDecentralized
 from src.network.network import Network
@@ -23,7 +22,7 @@ def run_sliding(
     r_y: float,
     eps: float,
     comm_budget_experiment: int,
-    stepsize_factor: Optional[float] = None,
+    stepsize_factors: Optional[Dict[str, float]] = None,
 ) -> DecentralizedSaddleSlidingRunner:
     sliding_runner = DecentralizedSaddleSlidingRunner(
         oracles=oracles,
@@ -37,9 +36,13 @@ def run_sliding(
     )
     sliding_runner.compute_method_params()
 
-    if stepsize_factor is not None:
-        sliding_runner.gamma *= stepsize_factor
-        print(f"Running src sliding with stepsize_factor: {stepsize_factor}...")
+    if stepsize_factors is not None:
+        output_str = ""
+        for parameter, stepsize in stepsize_factors.items():
+            attr = getattr(sliding_runner, parameter)
+            attr *= stepsize
+            output_str += f"{parameter}={stepsize}"
+        print(f"Running src sliding with {output_str} parameters...")
     else:
         print("Running src sliding...")
 
@@ -55,9 +58,7 @@ def run_sliding(
             sliding_runner.method.inner_iterations,
         )
     )
-    sliding_runner.method.logger.comm_per_iter = sliding_comm_per_iter(
-        sliding_runner.method
-    )
+    sliding_runner.method.logger.comm_per_iter = sliding_comm_per_iter(sliding_runner.method)
     sliding_runner.run(max_iter=comm_budget_experiment)
 
     return sliding_runner
