@@ -44,10 +44,10 @@ def run_vi_adom(
         output_str = ""
         for parameter, stepsize in stepsize_factors.items():
             attr = getattr(vi_adom_runner, parameter)
-            if attr == "eta_z":
-                vi_adom_runner.eta_z = stepsize / L
-            else:
-                attr *= stepsize
+            # if attr == "eta_z":
+            #     vi_adom_runner.eta_z = stepsize / L
+            # else:
+            attr *= stepsize
             output_str += f"{parameter}={stepsize}"
         print(f"Running src VI ADOM with {output_str} parameters...")
     else:

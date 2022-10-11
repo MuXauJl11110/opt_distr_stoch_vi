@@ -49,9 +49,7 @@ class Network(object):
         if matrix_type in Network.matrix_types:
             self.matrix_type = matrix_type
         else:
-            raise ValueError(
-                f"Unknown matrix_type {matrix_type}! Available matrix types: {Network.matrix_types}"
-            )
+            raise ValueError(f"Unknown matrix_type {matrix_type}! Available matrix types: {Network.matrix_types}")
 
         self.default_epoch_cfg = self.config_manager.config["default_epoch"]
 
@@ -93,32 +91,16 @@ class Network(object):
                 else:
                     if (
                         "duration" in self.current_epoch_cfg
-                        and (state - self.current_epoch_start)
-                        in self.current_epoch_cfg["states"]
+                        and (state - self.current_epoch_start) in self.current_epoch_cfg["states"]
                     ):
-                        L = self.get_laplacian(
-                            self.current_epoch_cfg["states"][
-                                state - self.current_epoch_start
-                            ]
-                        )
-                    elif (
-                        "interval" in self.current_epoch_cfg
-                        and state in self.current_epoch_cfg["states"]
-                    ):
-                        L_gos, L_mix = self.get_laplacian(
-                            self.current_epoch_cfg["states"][state]
-                        )
+                        L = self.get_laplacian(self.current_epoch_cfg["states"][state - self.current_epoch_start])
+                    elif "interval" in self.current_epoch_cfg and state in self.current_epoch_cfg["states"]:
+                        L_gos, L_mix = self.get_laplacian(self.current_epoch_cfg["states"][state])
                     else:
-                        L_gos, L_mix = self.get_laplacian(
-                            self.current_epoch_cfg["default_state"]
-                        )
+                        L_gos, L_mix = self.get_laplacian(self.current_epoch_cfg["default_state"])
 
-                    self.min_lambdas[state], self.max_lambdas[state] = self.compute_lam(
-                        L_gos
-                    )
-                    self.kappas[state] = (
-                        self.max_lambdas[state] / self.min_lambdas[state]
-                    )
+                    self.min_lambdas[state], self.max_lambdas[state] = self.compute_lam(L_gos)
+                    self.kappas[state] = self.max_lambdas[state] / self.min_lambdas[state]
 
                     filename = os.path.join(self.dirpath, f"{state}_gos_mat")
                     np.save(filename, L_gos / self.max_lambdas[state])
@@ -132,24 +114,20 @@ class Network(object):
         num_nodes = self.num_nodes - topology_config["bias"]
 
         def get_L(G):
-            self.nodelist = (
-                None if config["fixed"] else np.random.permutation(self.num_nodes)
-            )
+            self.nodelist = None if config["fixed"] else np.random.permutation(self.num_nodes)
 
             L_gos = (
                 np.asarray(
-                    nx.linalg.laplacianmatrix.directed_laplacian_matrix(
-                        G, nodelist=self.nodelist, walk_type="random"
-                    )
+                    nx.linalg.laplacianmatrix.directed_laplacian_matrix(G, nodelist=self.nodelist, walk_type="random")
                 )
                 if config["directed"] and not config["MST"]
-                else nx.linalg.laplacianmatrix.laplacian_matrix(
-                    G, nodelist=self.nodelist
-                ).toarray()
+                else nx.linalg.laplacianmatrix.laplacian_matrix(G, nodelist=self.nodelist).toarray()
             ).astype("float64")
-            L_mix = metropolis_weights(
-                nx.adjacency_matrix(G, nodelist=self.nodelist).toarray()
-            )
+            L_mix = metropolis_weights(nx.adjacency_matrix(G, nodelist=self.nodelist).toarray())
+
+            is_connected = nx.is_strongly_connected(G) if config["directed"] else nx.is_connected(G)
+            if not is_connected:
+                raise AssertionError("Graph isn't connected!")
 
             return L_gos, L_mix
 
@@ -161,22 +139,12 @@ class Network(object):
             try:
                 if topology_config["type"] == "random":
                     G = func(**config["args"], n=num_nodes, directed=config["directed"])
-                    is_connected = (
-                        nx.is_strongly_connected(G)
-                        if config["directed"]
-                        else nx.is_connected(G)
-                    )
+                    is_connected = nx.is_strongly_connected(G) if config["directed"] else nx.is_connected(G)
                     L_gos, L_mix = get_L(G)
                     while not (is_connected and self.compute_lam(L_gos)[1] < 100):
-                        G = func(
-                            **config["args"], n=num_nodes, directed=config["directed"]
-                        )
+                        G = func(**config["args"], n=num_nodes, directed=config["directed"])
                         L_gos, L_mix = get_L(G)
-                        is_connected = (
-                            nx.is_strongly_connected(G)
-                            if config["directed"]
-                            else nx.is_connected(G)
-                        )
+                        is_connected = nx.is_strongly_connected(G) if config["directed"] else nx.is_connected(G)
                 else:
                     G = func(
                         **config["args"],
@@ -220,10 +188,7 @@ class Network(object):
             self.current_epoch_end = min(self.next_epoch_end, self.num_states)
             self.current_epoch_cfg = self.next_epoch_cfg
             self.eval_next_epoch()
-        elif (
-            self.current_state + self.default_epoch_cfg["duration"]
-            >= self.next_epoch_start
-        ):
+        elif self.current_state + self.default_epoch_cfg["duration"] >= self.next_epoch_start:
             self.current_epoch_start = min(self.current_state, self.num_states)
             self.current_epoch_end = min(self.next_epoch_start, self.num_states)
             self.current_epoch_cfg = self.default_epoch_cfg
@@ -241,9 +206,7 @@ class Network(object):
             self.next_epoch_start = sys.maxsize
             self.next_epoch_end = sys.maxsize
         else:
-            self.next_epoch_cfg = self.config_manager.config["epochs"][
-                self.next_epoch_cnt
-            ]
+            self.next_epoch_cfg = self.config_manager.config["epochs"][self.next_epoch_cnt]
             self.next_epoch_start, self.next_epoch_end = self.next_epoch_cfg["interval"]
             self.next_epoch_cnt += 1
 
@@ -258,9 +221,7 @@ class Network(object):
             if self.plotting:
                 self.plot()
             raise StopIteration
-        filename = os.path.join(
-            self.dirpath, f"{self.current_state}_{self.matrix_type}.npy"
-        )
+        filename = os.path.join(self.dirpath, f"{self.current_state}_{self.matrix_type}.npy")
         W = np.load(filename)
         lambda_min = self.min_lambdas[self.current_state]
         lambda_max = self.max_lambdas[self.current_state]
@@ -283,9 +244,7 @@ class Network(object):
         :param eps_imag: To avoid floating point errors for imaginary part.
         """
         eigs = np.linalg.eigvals(matrix)
-        positive_eigs = [
-            eig.real for eig in eigs if eig.real > eps_real and eig.imag <= eps_imag
-        ]
+        positive_eigs = [eig.real for eig in eigs if eig.real > eps_real and eig.imag <= eps_imag]
 
         return min(positive_eigs), max(positive_eigs)
 
@@ -301,9 +260,7 @@ class Network(object):
                 node_color="#a8f0b9",
                 ax=axes[i],
             )
-            axes[i].set_title(
-                f"Iterations {1 + 5 * iteration} - {5 * (iteration + 20)}:", fontsize=26
-            )
+            # axes[i].set_title(f"Iterations {1 + 5 * iteration} - {5 * (iteration + 20)}:", fontsize=26)
 
         plt.tight_layout()
         plt.savefig(os.path.join(ROOT_DIR, self.save_to))
@@ -318,6 +275,4 @@ class Network(object):
             for j in range(weight):
                 map_[(i, j)] = idx
                 idx += 1
-        return nx.relabel_nodes(
-            nx.grid_2d_graph(n=height, m=weight, **args), mapping=map_, copy=False
-        )
+        return nx.relabel_nodes(nx.grid_2d_graph(n=height, m=weight, **args), mapping=map_, copy=False)

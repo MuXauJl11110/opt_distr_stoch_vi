@@ -1,0 +1,13 @@
+default_epoch:
+  duration: 1
+  default_state:
+    topology: erdos_renyi
+    directed: False
+    fixed: False
+    MST: True
+    plot: False
+    args:
+      p: 0.8
+      seed: 30
+  states: {}
+epochs: []
